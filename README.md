@@ -36,7 +36,7 @@ audio = conversation.to_podcast()
 
 ## Conversation & Music Configruation
 
->```yaml
+> ```yaml
 MODEL: gpt-4
 PROMPTS: 
   AGENTS:
