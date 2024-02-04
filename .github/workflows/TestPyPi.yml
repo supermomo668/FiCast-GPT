@@ -3,7 +3,7 @@ name: Python Package Test Publish
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   build-and-publish:
