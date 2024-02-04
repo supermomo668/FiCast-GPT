@@ -47,6 +47,15 @@ PROMPTS:
   CONVERSATION:
     HOST_CONTINUATION: Apart from what you mentioned, would you mind elaborating on what you discussed and some additional adjacent concepts?
 MEMORY_CONTEXT_TOKEN: 2000
-WORDS_PER_MIN: 150
-SPEAKING_TIME_MINS: 60
+SPEECH:
+  WORDS_PER_MIN: 150
+
+CONVERSATION:
+  SPEAKING_TIME_MINS: 60
+  TEMPO: 75
+
+MUSIC:
+  CATEOGRY: lofi
+
+
 ```
