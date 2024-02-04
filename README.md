@@ -1,6 +1,6 @@
 # FiCast-gpt
 
-A Python package for processing &amp; producing podcasts using GPT
+A Python package for processing &amp; producing "Fi-Casts" (LoFi + Podcast) with overlayed music aligned to the podcast 
 
 [![Test PyPi](https://github.com/supermomo668/podcast-gpt/actions/workflows/TestPyPi.yml/badge.svg?branch=main)](https://github.com/supermomo668/podcast-gpt/actions/workflows/TestPyPi.yml)
 
