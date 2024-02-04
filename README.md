@@ -12,7 +12,7 @@ python3 -m pip install --index-url https://test.pypi.org/simple/ --extra-index-u
 ```
 ## Quickstart
 
-```
+```python
 from podcast_gpt.chatbot import Chatbot
 from podcast_gpt.conversation import Conversation
 
@@ -30,11 +30,6 @@ conversation = Conversation()
 conversation.add(podcast_expert1)
 conversation.add(podcast_expert2)
 
-# Start the conversation
-conversation.to_podcast()
-
-# Print conversation history
-for entry in conversation.get_history():
-    print(f"{entry[0]} said: {entry[1]} | Response: {entry[2]}")
-
+# Make a podcast conversation
+audio = conversation.to_podcast()
 ```
