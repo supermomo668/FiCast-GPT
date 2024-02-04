@@ -33,7 +33,7 @@ conversation.add(joe_rogan)
 conversation.add(harvard_david_sinclair)
 
 my_musical_cast = FiCast(conf, conversation)
-my_musical_cast = MyMusicCast.define_music_auto()
+my_musical_cast = my_musical_cast.inject_music("auto")
 
 # Make a podcast conversation
 LofiCast = my_musical_cast.to_podcast()
