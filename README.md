@@ -20,15 +20,15 @@ from podcast_gpt.conversation import Conversation
 # Assuming 'conv_conf' and 'podcaster' are defined elsewhere and compatible with this setup
 
 # Initialize chatbot instances
-podcast_expert1 = Chatbot(
-  "PodcastExpert1", conv_conf, conversation_type="PODCAST_GUEST")
-podcast_expert2 = Chatbot(
-  "PodcastExpert2", conv_conf, conversation_type="PODCAST_HOST")
+joe_rogan = Chatbot(
+  "Joe Rogan", conv_conf, conversation_type="PODCAST")
+harvard_david_sinclair = Chatbot(
+  "Harvard Medical Expert", conv_conf, conversation_type="PODCAST")
 
 # Create a conversation and add both chatbots
 conversation = Conversation()
-conversation.add(podcast_expert1)
-conversation.add(podcast_expert2)
+conversation.add(joe_rogan)
+conversation.add(harvard_david_sinclair)
 
 # Make a podcast conversation
 audio = conversation.to_podcast()
