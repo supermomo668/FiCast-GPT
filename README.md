@@ -2,7 +2,7 @@
 
 A Python package for processing &amp; producing podcasts using GPT
 
-[![Test PyPi](https://github.com/supermomo668/podcast-gpt/actions/workflows/python-publish.yml/badge.svg?branch=master)](https://github.com/supermomo668/podcast-gpt/actions/workflows/TestPyPi.yml)
+[![Test PyPi](https://github.com/supermomo668/podcast-gpt/actions/workflows/python-publish.yml/badge.svg?branch=main)](https://github.com/supermomo668/podcast-gpt/actions/workflows/TestPyPi.yml)
 
 
 ## Install from Test PyPI
