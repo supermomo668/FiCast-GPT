@@ -18,16 +18,16 @@ from podcast_gpt.conversation import Conversation
 
 from podcast_gpt.assemble import FiCast
 
-# Define conversation configuration
-# Assuming 'conv_conf' and 'podcaster' are defined elsewhere and compatible with this setup
+# [Define conversation configuration shown in the next session]
+conf = ...
 
-# Initialize chatbot instances
+# Initialize participant instances
 joe_rogan = podcaster(
   "Joe Rogan", conf, conversation_type="PODCAST")
 harvard_david_sinclair = podcaster(
   "Harvard Medical Expert", conf, conversation_type="PODCAST")
 
-# Create a conversation and add both chatbots
+# Create a conversation and add both podcast participants
 conversation = Conversation()
 conversation.add(joe_rogan)
 conversation.add(harvard_david_sinclair)
@@ -35,7 +35,7 @@ conversation.add(harvard_david_sinclair)
 my_musical_cast = FiCast(conf, conversation)
 my_musical_cast = my_musical_cast.inject_music("auto")
 
-# Make a podcast conversation
+# Make a "FiCast" conversation
 LofiCast = my_musical_cast.to_podcast()
 ```
 
