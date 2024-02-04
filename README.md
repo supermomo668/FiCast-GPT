@@ -8,7 +8,7 @@ A Python package for processing &amp; producing PodCast overlayed with music ali
 ## Install from Test PyPI
 
 ```
-python3 -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ podcast-gpt
+python3 -m pip install -i https://test.pypi.org/simple/ ficast-gpt
 ```
 ## Quickstart
 
