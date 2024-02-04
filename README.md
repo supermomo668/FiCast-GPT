@@ -16,25 +16,30 @@ python3 -m pip install --index-url https://test.pypi.org/simple/ --extra-index-u
 from podcast_gpt.agent import podcaster
 from podcast_gpt.conversation import Conversation
 
+from podcast_gpt.assemble import FiCast
+
 # Define conversation configuration
 # Assuming 'conv_conf' and 'podcaster' are defined elsewhere and compatible with this setup
 
 # Initialize chatbot instances
 joe_rogan = podcaster(
-  "Joe Rogan", conv_conf, conversation_type="PODCAST")
+  "Joe Rogan", conf, conversation_type="PODCAST")
 harvard_david_sinclair = podcaster(
-  "Harvard Medical Expert", conv_conf, conversation_type="PODCAST")
+  "Harvard Medical Expert", conf, conversation_type="PODCAST")
 
 # Create a conversation and add both chatbots
 conversation = Conversation()
 conversation.add(joe_rogan)
 conversation.add(harvard_david_sinclair)
 
+my_musical_cast = FiCast(conf, conversation)
+my_musical_cast = MyMusicCast.define_music_auto()
+
 # Make a podcast conversation
-audio = conversation.to_podcast()
+LofiCast = my_musical_cast.to_podcast()
 ```
 
-## Conversation & Music Configruation
+## Declaritive Configruation
 
 ```yaml
 MODEL: gpt-4
