@@ -40,19 +40,23 @@ def generate_response_with_documents(query, documents):
     )
     return response.choices[0].text.strip()
 
+def get_query_response(query):
+    # query = "How much is Biden's Pell grant?"
 
-query = "What are Elon Musk's view on technology?"
+    # Generate embedding for the query
+    query_embedding = get_embedding(query)
 
-# Generate embedding for the query
-query_embedding = get_embedding(query)
+    # Query Pinecone
+    results = index.query(vector=query_embedding, top_k=5,include_metadata=True)
 
-# Query Pinecone
-results = index.query(vector=query_embedding, top_k=5,include_metadata=True)
+    # Retrieve document contents
+    document_ids = [match['id'] for match in results['matches']]
+    documents = [get_document_content(doc_id, results) for doc_id in document_ids]
+    # print(documents)
 
-# Retrieve document contents
-document_ids = [match['id'] for match in results['matches']]
-documents = [get_document_content(doc_id, results) for doc_id in document_ids]
+    response_text = generate_response_with_documents(query, documents)
+    return(response_text)
 
 
-response_text = generate_response_with_documents(query, documents)
-print(response_text)
+query = "How much is Biden's Pell grant?"
+print(get_query_response(query))
