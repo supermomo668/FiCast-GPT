@@ -4,13 +4,12 @@
 from typing import List
 import yaml
 from mutagen.mp3 import MP3
-from . import DEFAULT_CONF
   
 class BaseConv:
   def __init__(self, name):
       self.name = name
 
-  def __init__(self, conf=DEFAULT_CONF):
+  def __init__(self, conf: dict) -> None:
     """
     Initialize the Conversation class.
     """
@@ -44,7 +43,7 @@ class RoundTable(BaseConv):
 
     def add(self, chatbot):
         """Add a chatbot to the conversation."""
-        if isinstance(chatbot, Chatbot):
+        if isinstance(chatbot, ChatGent):
             self.participants.append(chatbot)
         else:
             raise ValueError("Only Chatbot instances can be added to the conversation.")    
@@ -78,8 +77,8 @@ class RoundTable(BaseConv):
 
 if __name__ == "__main__":
     # Create chatbot instances
-    chatbot1 = Chatbot("Alice")
-    chatbot2 = Chatbot("Bob")
+    chatbot1 = ChatGent("Alice")
+    chatbot2 = ChatGent("Bob")
 
     # Initialize a conversation
     conversation = Conversation()
