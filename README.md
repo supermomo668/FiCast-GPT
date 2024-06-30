@@ -64,3 +64,9 @@ MUSIC:
   CATEOGRY: lofi
   BPM: 80
 ```
+
+## Autogen Workflow Diagram
+
+<p align="center">
+  <img src="https://www.mermaidchart.com/raw/62a04ff4-da63-4033-a610-a2aacc5fba5c?theme=light&version=v0.1&format=svg" width="25%">
+</p>
