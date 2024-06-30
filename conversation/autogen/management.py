@@ -1,13 +1,15 @@
 import autogen
 import random
 
+import yaml
+    
 def weighted_choice(characters, current, weight=0.5):
     return random.choices(
         [char for char in characters if char != current],
         weights=[weight if i == (characters.index(current) + 1) % len(characters) else (1 - weight) / (len(characters) - 2) for i, char in enumerate(characters) if char != current]
     )[0]
 
-def state_transition(last_speaker, groupchat):
+def state_transition(last_speaker, groupchat, characters):
     messages = groupchat.messages
 
     if last_speaker.name == "Init":
@@ -24,7 +26,7 @@ def state_transition(last_speaker, groupchat):
     elif last_speaker.name in [agent.name for agent in groupchat.agents if agent.name in characters]:
         return groupchat.get_agent_by_name(weighted_choice(characters, last_speaker.name, weight=0.5))
 
-def create_groupchat(agents, config):
+def create_groupchat(agents, config=None):
     return autogen.GroupChat(
         agents=agents,
         messages=[],

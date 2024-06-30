@@ -15,7 +15,7 @@ def create_agents(config):
         ),
         "timeout": config.llm_config.timeout,
     }
-    
+    print(f"Loading LLM config from: {config.llm_config.config_list_path}")
     host = UserProxyAgent(
         name="host",
         is_termination_msg=lambda x: isinstance(x, dict) and "TERMINATE" == str(x.get("content", ""))[-9:].upper(),

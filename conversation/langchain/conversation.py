@@ -4,14 +4,12 @@
 from typing import List
 import yaml
 from mutagen.mp3 import MP3
-from . import DEFAULT_CONF
-from .base import ChatGent
-
+  
 class BaseConv:
   def __init__(self, name):
       self.name = name
 
-  def __init__(self, conf=DEFAULT_CONF):
+  def __init__(self, conf: dict) -> None:
     """
     Initialize the Conversation class.
     """
