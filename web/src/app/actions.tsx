@@ -1,13 +1,13 @@
 "use server";
 
-import { Message } from "@/components/Message";
-import { SAMPLE_MESSAGES } from "@/components/podcast";
+import { Message } from "@/app/components/Message";
+import { SAMPLE_MESSAGES } from "@/app/components/podcast";
 import { createStreamableUI } from "ai/rsc";
 
 import { generateObject, streamObject } from "ai";
 import { z } from "zod";
 import { openai } from "@ai-sdk/openai";
-import { CharacterImages } from "@/components/CHARACTERS";
+import { CharacterImages } from "@/app/components/CHARACTERS";
 
 import { Pinecone } from "@pinecone-database/pinecone";
 import OpenAI from "openai";
