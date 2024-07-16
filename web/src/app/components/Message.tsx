@@ -9,7 +9,6 @@ export function Message({ message }: { message: MessageEntry }) {
       <div className="grid gap-1 items-start text-sm">
         <div className="flex items-center gap-2">
           <div className="font-bold">{message.name}</div>
-          {/* <div className="text-sm text-muted-foreground">10:32 AM</div> */}
         </div>
         <div>
           <p>{message.message}</p>
