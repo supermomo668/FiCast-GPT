@@ -10,6 +10,6 @@ const config: Config = {
   theme: {
     extend: {},
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [require("tailwindcss-animate"), require("daisyui")],
 };
 export default config;
