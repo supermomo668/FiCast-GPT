@@ -1,7 +1,8 @@
 from pydantic import BaseModel
-from .base import Character
 
-class Podcaster(Character):
+from thought_agents.ontology.config.dialogue import PodcastCharacters, Person # 
+
+class Character(Person):
     """
     A class to represent a podcast participant.
 
@@ -24,6 +25,6 @@ class Podcaster(Character):
     desc: str
     mode: str
 
-    def __str__(self) -> str:
+    def introduce(self) -> str:
         """Return an introduction string for the podcaster."""
         return f"{self.name}: {self.desc}"
