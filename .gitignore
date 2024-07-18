@@ -1,5 +1,9 @@
 # General
 **/*.
+
+# Sensitive
+conf/OAI_CONFIG_LIST.txt
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

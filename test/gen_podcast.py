@@ -1,6 +1,5 @@
-import os
+import os, json, random
 from pathlib import Path
-import random
 from datetime import datetime
 import autogen
 from autogen import AssistantAgent, UserProxyAgent
@@ -109,12 +108,13 @@ def setup_agents(llm_config, characters):
         autogen.AssistantAgent(
             name=c_name,
             llm_config=llm_config,
-            system_message=f"As yourself: {c_name}, respond to the previous or existing dialogue.",
+            system_message=f"As the podcast guest: {c_name}, respond to the previous or existing dialogue.",
         )
         for c_name in characters
     ]
-
+    
     return initializer, research_coder, executor, informer, host_agent, podcast_agents, script_parser
+
 
 def weighted_choice(items, current, weight=0.5, host_chance=None, host=None):
     if host_chance is None:
@@ -132,38 +132,72 @@ def weighted_choice(items, current, weight=0.5, host_chance=None, host=None):
     choices = [item for item in items if item != current]
     return random.choices(choices, weights=weights)[0]
 
-def save_conversation(content, output_dir=Path("output/conversations")):
+def save_conversation(content, output_dir=Path("outputs/conversations")):
     output_dir.mkdir(exist_ok=True, parents=True)
-    if type(content) == list:
-        content = "\n".join(content)
+    
+    # Convert the content to a JSON string
+    content_json = json.dumps(content, indent=4)
+    
+    # Generate the filename with the current timestamp
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    filename = f"{timestamp}.txt"
+    filename = f"{timestamp}.json"
     filepath = os.path.join(output_dir, filename)
 
+    # Save the content to the file
     with open(filepath, "w") as file:
-        file.write(content)
+        file.write(content_json)
 
     return filepath
 
-def main(topic="General Conversation", characters=None, n_rounds=5):
-    if characters is None:
-        characters = ["Harry Potter", "Iron Man", "Darth Vader", "Alan Turing", "Albert Einstein", "Djingis Khan"]
+def get_state_transition(initializer, research_coder, executor, informer, host_agent, podcast_agents, script_parser):
+    def state_transition(last_speaker, groupchat):
+        messages = groupchat.messages
+
+        if last_speaker is initializer:
+            # init -> retrieve
+            return research_coder
+        elif last_speaker is research_coder:
+            # retrieve: action 1 -> action 2
+            return executor
+        elif last_speaker is executor:
+            if messages[-1]["content"] == "exitcode: 1":
+                # retrieve --(execution failed)--> coder
+                return research_coder
+            else:
+                # retrieve --(execution success)--> informer
+                return informer
+        elif last_speaker is informer:
+            # informer -> host
+            return host_agent
+        elif last_speaker is host_agent:
+            # host -> random character from podcast_agents
+            return random.choice(podcast_agents)
+        elif last_speaker in podcast_agents:
+            # one podcast agent -> another weighted choice from podcast_agents
+            return weighted_choice(podcast_agents, last_speaker, weight=0.5, host_chance=1/len(podcast_agents))
+        else:
+            return script_parser
+    return state_transition
     
+def main(topic="General Conversation", characters=None, n_rounds=5):    
     llm_config = setup_config()
     initializer, research_coder, executor, informer, host_agent, podcast_agents, script_parser = setup_agents(llm_config, characters)
-
+    speaker_transition = get_state_transition(
+        initializer, research_coder, executor, informer, host_agent, podcast_agents, script_parser
+    )
     groupchat = autogen.GroupChat(
-        agents=[initializer, research_coder, executor, informer, host_agent] + podcast_agents + [script_parser],
+        agents=[initializer, host_agent] + podcast_agents + [script_parser],
         messages=[],
         max_round=n_rounds,
-        speaker_selection_method="auto"
+        speaker_selection_method=speaker_transition
+        #"auto"
     )
     
     manager = autogen.GroupChatManager(groupchat=groupchat, llm_config=llm_config)
     
     characters_str = ",".join(characters)
     chat_result = initializer.initiate_chat(
-        manager, message=f"Carry out a podcast on the topic: '{topic}' among the characters: {characters_str}, in a real-life conversation using current and historical news to provide context. A character should only start or respond to the existing conversation."
+        manager, message=f"Create a podcast on the topic: '{topic}' among the characters: {characters_str}, as in a real-life conversation. Each dialogue must be inquired from each podcast guest. The dialogue are eventually compiled into a JSON transcript."
     )
     
     conv = chat_result.chat_history
@@ -177,7 +211,8 @@ def main(topic="General Conversation", characters=None, n_rounds=5):
 if __name__ == "__main__":
     last_message = main(
         topic="Science and Technology", 
-        characters=["Alan Turing", "Albert Einstein"],
-        n_rounds=5
+        characters=[
+            "Harry Potter", "Iron Man", "Darth Vader"],
+        n_rounds=8
         )
     print(last_message)

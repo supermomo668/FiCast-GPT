@@ -15,7 +15,8 @@ output_regex="outputs/conversations/*.txt"
 @app.get("/conversation-raw", response_class=JSONResponse)
 async def get_conversation_raw(
     topic: str = Query(..., description="Topic of the conversation"),
-    speakers: List[str] = Query(..., description="List of speakers")
+    speakers: List[str] = Query(..., description="List of speakers"),
+    n_rounds: int = Query(5, description="Number of rounds of the conversation"),
 ):
     try:
         conversation_output = gen_podcast(topic, speakers)

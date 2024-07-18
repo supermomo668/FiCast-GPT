@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "ficast"
+version = "0.1.0"
+description = ""
+authors = ["supermomo668 <mymomo119966.mm@gmail.com>"]
+license = "apache2.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.13"
+thought-agents = {version = "^0.1.0", source = "test-pypi"}
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[[tool.poetry.source]]
+name = "test-pypi"
+url = "https://test.pypi.org/simple/"
+priority = "explicit"

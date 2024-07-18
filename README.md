@@ -13,34 +13,45 @@ python3 -m pip install -i https://test.pypi.org/simple/ ficast-gpt
 ## Quickstart
 
 ```python
-from podcast_gpt.agent import podcaster
-from podcast_gpt.conversation import Conversation
+from ficast.character.podcaster import Podcaster
+from ficast.conversation.podcast import ConversationConfig
+from ficast.assemble.ficast import FiCast, Conversation
 
-from podcast_gpt.assemble import FiCast
-
-# [Define conversation configuration shown in the next session]
-conf = ...
+# Define conversation configuration
+conversation_config = ConversationConfig(
+    llm_config=AutogenLLMConfig(),  # Placeholder for LLM configuration
+    podcast_config=PodcastConfig(
+        topic="democracy",
+        n_rounds=20,
+        character_cfg=PodcastCharacters(
+            hosts=[Person(name="Joe Rogan", description="Joe Rogan is a funny and popular podcast host")],
+            guests=[Person(name="David Sinclair", description="David Sinclair is a Harvard Medical Expert")]
+        )
+    ),
+    system_prompts={}  # Placeholder for system prompts
+)
 
 # Initialize participant instances
-joe_rogan = podcaster(
-  "Joe Rogan", conf, conversation_type="PODCAST")
-harvard_david_sinclair = podcaster(
-  "Harvard Medical Expert", conf, conversation_type="PODCAST")
+joe_rogan = Podcaster(name="Joe Rogan", description="Joe Rogan is a funny and popular podcast host")
+david_sinclair = Podcaster(name="David Sinclair", description="David Sinclair is a Harvard Medical Expert")
 
 # Create a conversation and add both podcast participants
-conversation = Conversation()
-conversation.add(joe_rogan)
-conversation.add(harvard_david_sinclair)
+conversation = Conversation(type="podcast", n_rounds=20, topic="democracy", output_format="json")
+conversation.add([joe_rogan.name, david_sinclair.name])
 
-my_musical_cast = FiCast(conf, conversation)
-my_musical_cast = my_musical_cast.inject_music("auto")
+# Create a FiCast instance
+my_podcast = FiCast(conversation_config, conversation)
 
-# Make a "FiCast" conversation
-LofiCast = my_musical_cast.to_podcast()
+# Inject music into the podcast
+musical_podcast = my_podcast.inject_music(style="auto")
+
+# Convert the conversation to an audio podcast
+final_podcast = musical_podcast.to_podcast()
 ```
 
 ## Declaritive Configruation
 
+You may choose to run the application in a one-time declartive format using the `ficast.main` module.
 ```yaml
 MODEL: gpt-4
 PROMPTS: 
