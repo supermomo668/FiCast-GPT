@@ -15,7 +15,7 @@ def _get_random_voice():
   return random.choice(voices)
 
 def random_synthesize(
-  text="Hello! 你好! Hola! नमस्ते! Bonjour! こんにちは! مرحبا! 안녕하세요! Ciao! Cześć! Привіт! வணக்கம்!"
+  text: str="Hello! 你好! Hola! नमस्ते! Bonjour! こんにちは! مرحبا! 안녕하세요! Ciao! Cześć! Привіт! வணக்கம்!"
   ):
   audio = generate(
     text=text, 

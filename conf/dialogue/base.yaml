@@ -1,0 +1,16 @@
+defaults:
+  - _self_
+  - system_prompts: default
+  
+llm_config:
+  cache_seed: 42
+  temperature: 0
+  timeout: 120
+  config_list_path: "conf/OAI_CONFIG_LIST.txt"
+  filter_dict:
+    model: ["gemini-1.5-pro"]
+
+conversation_config:
+  n_rounds: 10
+  
+system_prompts: ${system_prompts}  # Reference to system_prompts.yaml

@@ -8,10 +8,10 @@ from thought_agents.ontology.config.dialogue import ConversationConfig, PodcastC
 with initialize(config_path="../../conf/dialogue"):
   config = compose(config_name="default")
   # Convert the OmegaConf config to the Pydantic model
-  podcast_dict_cfg = OmegaConf.to_container(config, resolve=True)
-  conv_cfg: ConversationConfig = ConversationConfig(**podcast_dict_cfg)
+  default_cfg: ConversationConfig = ConversationConfig(
+    **OmegaConf.to_container(config, resolve=True)
+  )
   
-
-# Register the configuration with ConfigStore
-cs = ConfigStore.instance()
-cs.store(name="podcast_config", node=podcast_dict_cfg)
+default_llm_config  = default_cfg.llm_config
+default_system_prompts = default_cfg.system_prompts
+default_podcast_config = default_cfg.podcast_config

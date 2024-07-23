@@ -33,7 +33,6 @@ def extract_mp3_links(base_url, max_links, timeout=5):
     links_collected = 0
     page_number = 1
     mp3_links = []
-
     while links_collected < max_links:
         try:
             page_url = f"{base_url}/page/{page_number}/"

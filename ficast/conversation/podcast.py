@@ -1,33 +1,89 @@
+from typing import List
+from beartype import beartype
+
 import autogen
+
+from thought_agents.ontology.config.dialogue import ConversationConfig, PodcastConfig, PodcastCharacters, Person, AutogenLLMConfig
+ 
+from .base import Conversation
+from ficast.character.podcast import Character, Podcaster
 
 from thought_agents.dialogue.chat import create_podcast_group
 from thought_agents.dialogue.initiator import initiation_registry
 from thought_agents.dialogue.agents import agent_registry
 
-from .config import ConversationConfig
+from thought_agents.dialogue.transition import get_state_transition
+from .config import conv_cfg
 
-def create_podcast_group(cfg: ConversationConfig):
-    initializer = autogen.UserProxyAgent(
-        name="init", 
-        code_execution_config=False,
+class Podcast(Conversation):
+  n_rounds: int
+  topic: str
+  output_format: str
+  participants: List[Podcaster] = []
+  cfg: ConversationConfig = conv_cfg
+  podcast_cfg: ConversationConfig = conv_cfg.podcast_config
+  conv_mode: str = "podcast"
+  class Config:
+    arbitrary_types_allowed = True
+
+  def __init__(
+    self,
+    topic: str, 
+    participants: List[Character] = [], 
+    n_rounds: int =None, 
+    output_format: str="json"):
+    
+    super().__init__(topic=topic, participants=participants, n_rounds=n_rounds, output_format=output_format)
+    # self.config = conv_cfg  # Assuming conv_cfg is defined elsewhere
+    self.initializer = autogen.UserProxyAgent(
+      name="init", 
+      code_execution_config=False,
     )
+  @beartype
+  @property
+  def agent_chain(self) -> List[autogen.Agent]:
     # create research_agents: research_coder, executor, informer
     research_agents = agent_registry.get_class("dialogue.research")(
-        cfg.llm_config, cfg.system_prompts)
-    podcast_host, podcast_guests = agent_registry.get_class("podcast.characters")(cfg)
+      self.cfg.llm_config, self.cfg.system_prompts)
     script_parser = agent_registry.get_class("podcast.parser")(
-        cfg.llm_config, cfg.system_prompts)
+      self.cfg.llm_config, self.cfg.system_prompts)
     # create podcast agents:  podcast_host, podcast_guests
-    all_agents = [initializer] + research_agents + podcast_host + podcast_guests + script_parser
+    agents = [self.initializer]
+    for a in [research_agents, self.host_agents, self.guest_agents, script_parser]:
+      agents.extend(a)
+    return agents
+  
+  @property
+  def host_agents(self) -> List[Podcaster]:
+    return [p.agent for p in self.participants if p.role=="host"]
+    
+  @property
+  def guest_agents(self) -> List[Podcaster]:
+    return [p.agent for p in self.participants if p.role=="guest"]
+  
+  def _validate_participants(self):
+    # min 2 participants
+    if self.n_participants < 2:
+      raise ValueError(f"Podcast requires at least 2 participants. currently: {self.n_participants}")
+    # require host
+    if not any([p.role=="host" for p in self.participants]):
+      raise ValueError("Podcast requires at least 1 host.")
+    # require guest
+    if not any([p.role=="guest" for p in self.participants]):
+      raise ValueError("Podcast requires at least 1 guest.")
+      
+  def _create_conv_group(self):
+    self._validate_participants()
     groupchat = autogen.GroupChat(
-        agents=all_agents,
+        agents=self.agent_chain,
         messages=[],
-        max_round=cfg.podcast_config.n_rounds,
+        max_round=self.podcast_cfg.n_rounds,
         speaker_selection_method=get_state_transition(
-            cfg.podcast_config, transition="podcast.default", MAX_ROUND=10
+          self.podcast_cfg, transition=f"{self.conv_mode}.default", 
+          MAX_ROUND=self.podcast_cfg.n_rounds
         ),
     )
-    return initializer, autogen.GroupChatManager(
+    self.groupchat_manager = autogen.GroupChatManager(
         groupchat=groupchat, 
-        llm_config=cfg.llm_config.model_dump()
+        llm_config=self.cfg.llm_config.model_dump()
     )

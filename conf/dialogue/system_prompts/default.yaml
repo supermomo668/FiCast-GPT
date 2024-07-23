@@ -8,12 +8,11 @@ research:
   Suggest the full code instead of partial code or code changes. 
   If the error can't be fixed or if the task is not solved even after the code is executed successfully, analyze the problem, revisit your assumption, collect additional info you need, and think of a different approach to try. 
   Ensure proper error handling such that an appropriate format of results is returned with the error code. 
-  Do not use any method that requires an external API key to work.
-  "
+  Do not use any method that requires an external API key to work."
   executor: "Executor. Execute the code written by the Coder and report the result."
   informer: "Provide the summarized biograpy of the podcast guests in the conversation to the podcast hosts for starting the conversation. The summary must include their most known achievements, personality and relevant news as context that most informs about the character."
 podcast:
   initiation: "You are going to prepare the host for a podcast among: {characters} in a real-life conversation about {topic}."
   host: "As yourself: {0}, respond to the conversation."
   guest: "As yourself: {0}, respond to the conversation."
-  script_parser: "{0}"
+  script_parser: "{parse_instruct}"

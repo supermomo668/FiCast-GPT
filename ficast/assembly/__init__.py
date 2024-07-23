@@ -1,4 +1,4 @@
-from ficast.character.podcaster import Podcaster
+from ficast.character.podcast import Podcaster
 from ficast.conversation.podcast import create_podcast_group, ConversationConfig
 from pydantic import BaseModel
 from typing import List, Dict, AnyStr

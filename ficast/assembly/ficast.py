@@ -3,10 +3,10 @@ from hydra import initialize, compose
 from typing import Any
 
 from ficast.assembly.base import ConvCast
-from ficast.character import Podcaster
-from ficast.conversation import Conversation
+from ficast.character.podcast import Podcaster
+from ficast.conversation.podcast import Podcast
 
-class FiCast(ConvCast):
+class Ficast(ConvCast):
     """
     A class to assemble and create a podcast conversation.
 
@@ -25,15 +25,15 @@ class FiCast(ConvCast):
         Converts the conversation to an audio podcast.
     """
 
-    def __init__(self, config: Any, conversation: Conversation):
+    def __init__(self, config: Any, conversation: Podcast):
         self.config = config
         self.conversation = conversation
 
-    def inject_music(self, style: str = "auto") -> 'FiCast':
+    def inject_music(self, style: str = "auto") -> None:
         """Inject music into the podcast."""
         # TODO: Implement music injection based on style
         print(f"Injecting {style} music into the podcast.")
-        return self
+        
 
     def to_podcast(self) -> str:
         """Convert the conversation to an audio podcast."""

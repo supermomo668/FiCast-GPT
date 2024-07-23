@@ -1,7 +1,7 @@
 import os
 from typing import Any
 
-from ficast.character.podcaster import Podcaster
+from ficast.character.podcast import Podcaster
 from ficast.conversation.base import Conversation
 
 from elevenlabs.client import ElevenLabs
