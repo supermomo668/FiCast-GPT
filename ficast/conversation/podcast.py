@@ -21,7 +21,7 @@ class Podcast(Conversation):
   output_format: str
   participants: List[Podcaster] = []
   cfg: ConversationConfig = conv_cfg
-  podcast_cfg: ConversationConfig = conv_cfg.podcast_config
+  podcast_cfg: PodcastConfig = conv_cfg.podcast_config
   conv_mode: str = "podcast"
   class Config:
     arbitrary_types_allowed = True
@@ -39,6 +39,9 @@ class Podcast(Conversation):
       name="init", 
       code_execution_config=False,
     )
+    self.podcast_cfg.n_rounds = n_rounds
+    self.podcast_cfg.topic = topic
+    
   @beartype
   @property
   def agent_chain(self) -> List[autogen.Agent]:
@@ -54,9 +57,14 @@ class Podcast(Conversation):
     return agents
   
   @property
+  def hosts(self) -> List[Podcaster]:
+    return [p for p in self.participants if p.role=="host"]
+  @property
   def host_agents(self) -> List[Podcaster]:
     return [p.agent for p in self.participants if p.role=="host"]
-    
+  @property
+  def guests(self) -> List[Podcaster]:
+    return [p for p in self.participants if p.role=="guest"]
   @property
   def guest_agents(self) -> List[Podcaster]:
     return [p.agent for p in self.participants if p.role=="guest"]
@@ -71,15 +79,21 @@ class Podcast(Conversation):
     # require guest
     if not any([p.role=="guest" for p in self.participants]):
       raise ValueError("Podcast requires at least 1 guest.")
-      
+  
+  def _set_character_cfg(self):
+    self.podcast_cfg.character_cfg.hosts = self.hosts
+    self.podcast_cfg.character_cfg.guests = self.guests
+    
   def _create_conv_group(self):
     self._validate_participants()
+    self._set_character_cfg()
     groupchat = autogen.GroupChat(
         agents=self.agent_chain,
         messages=[],
         max_round=self.podcast_cfg.n_rounds,
         speaker_selection_method=get_state_transition(
-          self.podcast_cfg, transition=f"{self.conv_mode}.default", 
+          self.podcast_cfg, 
+          transition=f"podcast.default", 
           MAX_ROUND=self.podcast_cfg.n_rounds
         ),
     )

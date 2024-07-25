@@ -539,6 +539,17 @@ files = [
 ]
 
 [[package]]
+name = "gender-guesser"
+version = "0.4.0"
+description = "Get the gender from first name."
+optional = false
+python-versions = "*"
+files = [
+    {file = "gender-guesser-0.4.0.tar.gz", hash = "sha256:1591c14592805ca7da06a46d5f7202511f7cb87547049a68dfccbeedb879f31b"},
+    {file = "gender_guesser-0.4.0-py2.py3-none-any.whl", hash = "sha256:7cb01ce5d8d43b94573498bc02c959b622872abd399622ca67d1b73ba6e7e222"},
+]
+
+[[package]]
 name = "google-ai-generativelanguage"
 version = "0.6.6"
 description = "Google Ai Generativelanguage API client library"
@@ -2794,4 +2805,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.13"
-content-hash = "2c2efd0ec3bf52c88e9d3e88bf287839caa01dc79f9876c62014889fdfb84d6c"
+content-hash = "3b6e5f0db92b9cb9e632b030a141c0cffc25d381fefc08c7bf31f0f015a14aec"

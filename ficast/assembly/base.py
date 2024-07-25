@@ -1,7 +1,9 @@
+from abc import abstractmethod
 import os
 from typing import Any
+from pydantic import BaseModel
 
-from ficast.character.podcast import Podcaster
+from ficast.dialogue.synthesis import DialogueSynthesis 
 from ficast.conversation.base import Conversation
 
 from elevenlabs.client import ElevenLabs
@@ -10,7 +12,7 @@ client = ElevenLabs(
   api_key=os.getenv("ELEVENLABS_API_KEY")
 )
 
-class ConvCast:
+class ConvCast(BaseModel):
     """
     A class to assemble and create a podcast conversation.
 
@@ -28,13 +30,23 @@ class ConvCast:
     to_podcast() -> str:
         Converts the conversation to an audio podcast.
     """
+    conversation: Conversation
+    def __init__(
+        self, 
+        conversation: Conversation, 
+        **kwargs: Any
+        ):
+        
+        super().___init__(**kwargs)
 
-    def __init__(self, config: Any, conversation: Conversation):
-        self.config = config
-        self.conversation = conversation
-
-    def text_to_speech(self, text: str) -> str:
-        """Convert the conversation to an audio podcast."""
+    @abstractmethod
+    def to_podcast(self, text: str) -> str:
+        """Convert the conversation script to an audio podcast."""
         # TODO: Implement conversion to audio podcast
         print("Converting conversation to audio podcast.")
-        return "Audio podcast content"
+        raise NotImplementedError
+    
+    
+    
+
+    

@@ -33,7 +33,6 @@ class Ficast(ConvCast):
         """Inject music into the podcast."""
         # TODO: Implement music injection based on style
         print(f"Injecting {style} music into the podcast.")
-        
 
     def to_podcast(self) -> str:
         """Convert the conversation to an audio podcast."""

@@ -41,6 +41,7 @@ def extract_mp3_links(base_url, max_links, timeout=5):
             # Break if the page is empty or not found
             if response.status_code != 200 or not response.content:
                 print(f"Page {page_url} returns: {response.status_code}")
+                if links_collected == 0: raise ValueError("No links found on the first page, try a different style since this is unavailable")
                 break
 
             soup = BeautifulSoup(response.content, 'html.parser')
@@ -70,11 +71,11 @@ def extract_mp3_links(base_url, max_links, timeout=5):
 
 
 def download_links(
-    mp3_links, download_folder='music'
+    mp3_links, 
+    download_folder='_outputs/music'
     ):
-    if not Path(download_folder).exists():
-        Path(download_folder).mkdir()
-
+    Path(download_folder).mkdir(parents=True, exist_ok=True)
+    download_paths = []
     for url in tqdm(mp3_links):
         try:
             file_name = Path(urlparse(url).path).name
@@ -83,16 +84,59 @@ def download_links(
             with urllib.request.urlopen(req) as response, open(download_path, 'wb') as out_file:
                 data = response.read()
                 out_file.write(data)
+            download_paths.append(download_path)
             tqdm.write(f"downloading links...{url}")
             time.sleep(0.1)  # Sleep for 0.1 second
         except Exception as e:
             print(f"Error downloading {url}: {e}")
+    return download_paths
 
+def validate_style(style, allowed_tags):
+    if style.lower() not in allowed_tags.lower():
+        raise ValueError(f"Invalid style '{style}'. Allowed styles are: {', '.join(allowed_tags)} in lower case.")
+    
+def main(
+    style: str = "lofi", 
+    options: dict = {
+        "source": "chosic",
+        "choice": "first", 
+        "max_links":2, 
+        "output":"_outputs/music"
+    },
+    src_cfg: str | Path = "sources.yml",
+    ):
+    """
+    Main function that collects and downloads MP3 links from a given base URL.
+
+    Args:
+        style (str, optional): The style of music to collect links for. Defaults to "lofi".
+        options (dict, optional): Additional options for the function. Defaults to {"choice":"first", "max_links":2}.
+
+    Returns:
+        list: A list of downloaded MP3 links.
+
+    Example:
+        >>> main("lofi")
+        Collected 10 links
+        ['https://example.com/song1.mp3', 'https://example.com/song2.mp3', ...]
+    """
+    with open(src_cfg, 'r') as file:
+        data = yaml.safe_load(file)
+    base_url = data[options.get("source")]['base_urls'], 
+
+    base_url = f"https://www.chosic.com/free-music/{style}"
+    mp3_links = extract_mp3_links(base_url, options.get('max_links', 2))
+    return download_links(mp3_links, options.get('dowload_folder'))
+    
 if __name__ == '__main__':
     # Usage
-    base_url = "https://www.chosic.com/free-music/lofi"
-    max_links = 10  # For example, to collect 10 links
+    import yaml
+    import os
 
-    mp3_links = extract_mp3_links(base_url, max_links)
-    print(f"Collected {len(mp3_links)} links")
-    download_links(mp3_links)
+    def load_sources(file_path: str) -> dict:
+        with open(file_path, 'r') as file:
+            return yaml.safe_load(file)
+    
+    main("ariana-grande")
+    
+    

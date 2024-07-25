@@ -1,0 +1,5 @@
+style: lofi
+options:
+  choice: first
+  max_links: 2
+  output: _outputs/music
