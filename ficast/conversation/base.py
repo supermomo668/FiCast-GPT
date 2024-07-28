@@ -116,7 +116,7 @@ class Conversation:
         llm_config=cfg.llm_config.model_dump()
     )
     
-  def create(self) -> autogen.agentchat.chat.ChatResult:
+  def  create(self) -> autogen.agentchat.chat.ChatResult:
     if not hasattr(self, 'groupchat_manager'):
       # create groupchat manager if not exist 
       self._create_conv_group()
@@ -124,9 +124,11 @@ class Conversation:
       self.groupchat_manager, 
       message=self.cfg.system_prompts[self.conv_mode]["initiation"].format(
       characters=",".join([p.name for p in self.participants]),
-      topic=self.cfg.podcast_config.topic
+      topic=self.cfg.podcast_config.topic,
+      length=self.cfg.podcast_config.length
       )
-    )
+    ).chat_history   # chatResult := id, chat_history
+    return self.chat_history
     
   
   

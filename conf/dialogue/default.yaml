@@ -6,6 +6,7 @@ defaults:
 podcast_config:
   topic: "Democracy"
   n_rounds: ${conversation_config.n_rounds}  # Inherit from base.yaml
+  length: 10
   character_cfg:
     hosts: ${characters.hosts}  # Reference to host in characters.yaml
     guests: ${characters.guests}  # Reference to guests in characters.yaml

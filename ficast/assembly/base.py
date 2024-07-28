@@ -3,7 +3,6 @@ import os
 from typing import Any
 from pydantic import BaseModel
 
-from ficast.dialogue.synthesis import DialogueSynthesis 
 from ficast.conversation.base import Conversation
 
 from elevenlabs.client import ElevenLabs
@@ -36,7 +35,6 @@ class ConvCast(BaseModel):
         conversation: Conversation, 
         **kwargs: Any
         ):
-        
         super().___init__(**kwargs)
 
     @abstractmethod

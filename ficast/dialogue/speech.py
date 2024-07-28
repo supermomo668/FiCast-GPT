@@ -76,8 +76,7 @@ class ElevenSpeech:
 if __name__=="__main__":
   def main():
     from .utils import collect_audio, save_bytes_to_mp3
-    
-    dialogue = SpeechSynthesis()
+    dialogue = ElevenSpeech()
     gen = dialogue.synthesize((dialogue.all_voices)[0].voice_id, "Hi David Sinclair, how have you been")
     audio = collect_audio(gen)
     save_bytes_to_mp3(audio, 'ficast-outputs/dialogue/test.mp3')

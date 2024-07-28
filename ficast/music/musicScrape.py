@@ -72,14 +72,14 @@ def extract_mp3_links(base_url, max_links, timeout=5):
 
 def download_links(
     mp3_links, 
-    download_folder='_outputs/music'
+    options
     ):
-    Path(download_folder).mkdir(parents=True, exist_ok=True)
+    Path(options.get('output_folder')).mkdir(parents=True, exist_ok=True)
     download_paths = []
-    for url in tqdm(mp3_links):
+    for n, url in tqdm(enumerate(mp3_links)):
         try:
             file_name = Path(urlparse(url).path).name
-            download_path = Path(download_folder)/file_name
+            download_path = Path(options.get('output_folder'))/file_name
             req = urllib.request.Request(url, headers=DEFAULT_HEADERS)
             with urllib.request.urlopen(req) as response, open(download_path, 'wb') as out_file:
                 data = response.read()
@@ -101,7 +101,7 @@ def main(
         "source": "chosic",
         "choice": "first", 
         "max_links":2, 
-        "output":"_outputs/music"
+        "output_folder":"_outputs/music"
     },
     src_cfg: str | Path = "sources.yml",
     ):
@@ -122,21 +122,18 @@ def main(
     """
     with open(src_cfg, 'r') as file:
         data = yaml.safe_load(file)
-    base_url = data[options.get("source")]['base_urls'], 
-
-    base_url = f"https://www.chosic.com/free-music/{style}"
-    mp3_links = extract_mp3_links(base_url, options.get('max_links', 2))
-    return download_links(mp3_links, options.get('dowload_folder'))
+    base_url = data[options.get("source")]['base_urls'].format(style=style)
+    mp3_links = extract_mp3_links(base_url, options.get('max_links', 1))
+    return download_links(mp3_links, options)
     
 if __name__ == '__main__':
     # Usage
     import yaml
-    import os
 
     def load_sources(file_path: str) -> dict:
         with open(file_path, 'r') as file:
             return yaml.safe_load(file)
     
-    main("ariana-grande")
+    main("lofi")
     
     

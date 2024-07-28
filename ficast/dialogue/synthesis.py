@@ -1,5 +1,6 @@
 from typing import Dict, List
 import dotenv
+from elevenlabs import play, stream, save
 
 from .speech import ElevenSpeech
 
@@ -17,7 +18,10 @@ if __name__=="__main__":
   from .utils import collect_audio, save_bytes_to_mp3
   def main():
     dialogue = DialogueSynthesis()
-    gen = dialogue.synthesize((dialogue.all_voices)[0].voice_id, "Hi David Sinclair, how have you been")
+    gen = dialogue.synthesize(
+      (dialogue.all_voices)[0].voice_id, 
+      "Hi David, how have you been?"
+    )
     audio = collect_audio(gen)
     save_bytes_to_mp3(audio, 'ficast-outputs/dialogue/test.mp3')
     play(audio)

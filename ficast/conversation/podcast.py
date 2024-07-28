@@ -1,15 +1,14 @@
 from typing import List
 from beartype import beartype
+import re, json
 
 import autogen
 
-from thought_agents.ontology.config.dialogue import ConversationConfig, PodcastConfig, PodcastCharacters, Person, AutogenLLMConfig
+from thought_agents.ontology.config.dialogue import ConversationConfig, PodcastConfig
  
 from .base import Conversation
 from ficast.character.podcast import Character, Podcaster
 
-from thought_agents.dialogue.chat import create_podcast_group
-from thought_agents.dialogue.initiator import initiation_registry
 from thought_agents.dialogue.agents import agent_registry
 
 from thought_agents.dialogue.transition import get_state_transition
@@ -18,7 +17,7 @@ from .config import conv_cfg
 class Podcast(Conversation):
   n_rounds: int
   topic: str
-  output_format: str
+  output_format: str = "json"
   participants: List[Podcaster] = []
   cfg: ConversationConfig = conv_cfg
   podcast_cfg: PodcastConfig = conv_cfg.podcast_config
@@ -31,9 +30,9 @@ class Podcast(Conversation):
     topic: str, 
     participants: List[Character] = [], 
     n_rounds: int =None, 
-    output_format: str="json"):
+    ):
     
-    super().__init__(topic=topic, participants=participants, n_rounds=n_rounds, output_format=output_format)
+    super().__init__(topic=topic, participants=participants, n_rounds=n_rounds, output_format=self.output_format)
     # self.config = conv_cfg  # Assuming conv_cfg is defined elsewhere
     self.initializer = autogen.UserProxyAgent(
       name="init", 
@@ -42,7 +41,6 @@ class Podcast(Conversation):
     self.podcast_cfg.n_rounds = n_rounds
     self.podcast_cfg.topic = topic
     
-  @beartype
   @property
   def agent_chain(self) -> List[autogen.Agent]:
     # create research_agents: research_coder, executor, informer
@@ -101,3 +99,17 @@ class Podcast(Conversation):
         groupchat=groupchat, 
         llm_config=self.cfg.llm_config.model_dump()
     )
+  
+  @property
+  def script(self) -> str:
+    if hasattr(self, 'chat_history'):
+      # return the script in json dictionary 
+      json_script = re.sub(r'^```json|```$', '', self.chat_history[-1].get('content'), flags=re.MULTILINE).strip()
+      try: 
+        return json.loads(json_script)
+      except Exception(json.JSONDecodeError):
+        print(f"Error with json script, returning raw json string.")
+        return json_script
+
+    else:
+      raise ValueError("Podcast conversation has not been created yet. Use `.create()` to create the conversation.")

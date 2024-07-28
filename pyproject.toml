@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ficast"
-version = "0.1.0"
+version = "0.1.1"
 description = ""
 authors = ["supermomo668 <mymomo119966.mm@gmail.com>"]
 license = "apache2.0"
@@ -8,7 +8,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.13"
-thought-agents = {version = "^0.1.0", source = "test-pypi"}
+thought-agents = {version = "^0.2.4", source = "test-pypi"}
 elevenlabs = "^1.5.0"
 gender-guesser = "^0.4.0"
 

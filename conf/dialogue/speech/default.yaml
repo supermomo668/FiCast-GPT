@@ -1,4 +1,5 @@
 voices:
+  eleven_api: "https://api.elevenlabs.io/v1/voices"
   options:
     choice: first
   female: EXAVITQu4vr4xnSDxMaL   # sarah

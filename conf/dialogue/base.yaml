@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - system_prompts: default
+  - system_prompts: research
   
 llm_config:
   cache_seed: 42

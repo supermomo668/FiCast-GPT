@@ -3,7 +3,7 @@ from hydra import initialize, compose
 from typing import Any
 
 from ficast.assembly.base import ConvCast
-from ficast.character.podcast import Podcaster
+from ficast.dialogue.synthesis import DialogueSynthesis 
 from ficast.conversation.podcast import Podcast
 
 class Ficast(ConvCast):
@@ -24,9 +24,13 @@ class Ficast(ConvCast):
     to_podcast() -> str:
         Converts the conversation to an audio podcast.
     """
+    conversation: Podcast
+    dialogue: DialogueSynthesis = DialogueSynthesis
 
-    def __init__(self, config: Any, conversation: Podcast):
-        self.config = config
+    def __init__(
+        self, 
+        conversation: Podcast,
+        ):
         self.conversation = conversation
 
     def inject_music(self, style: str = "auto") -> None:
