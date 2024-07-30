@@ -11,6 +11,8 @@ class DialogueSynthesis(ElevenSpeech):
   def __init__(self):
     super().__init__()
     
+  def get_nth_voice_by_gender(self):
+    self.all_voices()
   def chat_to_speech(self, chat: List[Dict]):
     pass
   

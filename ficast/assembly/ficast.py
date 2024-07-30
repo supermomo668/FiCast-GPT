@@ -1,3 +1,5 @@
+import hydra
+from omegaconf import DictConfig, OmegaConf
 from thought_agents.ontology.chats.client import AutogenLLMConfig
 from hydra import initialize, compose
 from typing import Any
@@ -43,3 +45,12 @@ class Ficast(ConvCast):
         # TODO: Implement conversion to audio podcast
         print("Converting conversation to audio podcast.")
         return "Audio podcast content"
+
+@hydra.main(version_base=None, config_path="../../conf/dialogue", config_name="default")
+def main(cfg: DictConfig) -> None:
+    # Convert the OmegaConf config to the Pydantic model
+    config_dict = OmegaConf.to_container(cfg, resolve=True)
+    my_ficast = Ficast(**config_dict)
+
+if __name__ == "__main__":
+    main()

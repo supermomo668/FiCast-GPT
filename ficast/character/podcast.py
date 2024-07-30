@@ -1,6 +1,7 @@
 import autogen 
 
 from thought_agents.dialogue.utils import termination_msg
+from thought_agents.ontology.parser.dialogue import monologue_parser
 
 from .base import Character
 
@@ -37,7 +38,9 @@ class Podcaster(Character):
         model=model, 
         role=role
       )
-      self.system_message = self.cfg.system_prompts['podcast'][role]
+      self.system_message = self.cfg.system_prompts['podcast'][role].format_map({
+        "name": name, "parser": monologue_parser.get_format_instructions()
+      })
       
     def __allowed_roles__(self):
       return ["host", "guest"]
@@ -46,7 +49,6 @@ class Podcaster(Character):
     def agent(self):
       return autogen.ConversableAgent(
         name=self.name,  
-        is_termination_msg=termination_msg,
         human_input_mode="NEVER",
         code_execution_config=False,
         llm_config=self.cfg.llm_config.model_dump(),

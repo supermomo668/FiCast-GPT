@@ -30,7 +30,14 @@ class ElevenSpeech:
     
   @property
   @lru_cache(maxsize=None)
-  def all_voices(self, save_meta=True) -> List[Voice]:
+  def all_voices(self, save_meta=False) -> List[Voice]:
+    """
+    Returns a list of all available voices.
+    Args:
+        save_meta (bool, optional): Whether to save the metadata of the retrieved voices. Defaults to False.
+    Returns:
+        List[Voice]: A list of Voice objects representing the available voices
+    """
     response = self.client.voices.get_all()
     self.voice_metainfo = [v.__dict__ for v in response.voices]
     print(f"Available voices:\n", self.voice_metainfo)
@@ -65,10 +72,10 @@ class ElevenSpeech:
     self,
     voice_id: int,
     text: str="Hello! 你好! Hola! नमस्ते! Bonjour! こんにちは! مرحبا! 안녕하세요! Ciao! Cześć! Привіт! வணக்கம்!",
-    ) -> Generator[bytearray] | AsyncGenerator[bytearray]:
+    ) -> Generator[bytearray, None, None] | AsyncGenerator[bytearray, None, None]:
     audio = self.client.generate(
       text=text, 
-      voice=self.get_voice(voice_id), 
+      voice=self.get_voice(voice_id),
       model="eleven_multilingual_v2",
     )
     return audio 

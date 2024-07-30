@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, TypeVar
+import warnings
 
 import autogen
 
@@ -9,6 +10,8 @@ from thought_agents.ontology.config.dialogue import ConversationConfig, PodcastC
 from beartype import beartype
 
 from ficast.character.base import Character
+
+CH = TypeVar('CH', bound=Character)
 
 class Conversation:
   """
@@ -59,12 +62,18 @@ class Conversation:
     )
     self.all_agents = [self.initializer] + self.participant_agents
 
-  def add(self, participants):
+  def _validate_new_participants(self, participants: List[Character]):
+    for p in participants:
+      if p in self.participants:
+        warnings.warn(f"Participant {p} is already in the conversation")
+      
+  @beartype  
+  def add(self, participants: List[CH] | CH):
     """Add participants to the conversation."""
-    if type(participants) is list:
-        self.participants.extend(participants)
     if issubclass(Character, participants.__class__):
-        self.participants.append(participants)
+      participants = [participants]
+    self._validate_new_participants(participants)
+    self.participants.extend(participants)
       
   @property
   def n_participants(self) -> int:

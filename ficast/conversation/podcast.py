@@ -1,4 +1,6 @@
-from typing import List
+from logging import warning
+from typing import Dict, List
+import warnings
 from beartype import beartype
 import re, json
 
@@ -13,6 +15,8 @@ from thought_agents.dialogue.agents import agent_registry
 
 from thought_agents.dialogue.transition import get_state_transition
 from .config import conv_cfg
+from .utils import extract_json_code_block
+
 
 class Podcast(Conversation):
   n_rounds: int
@@ -101,15 +105,29 @@ class Podcast(Conversation):
     )
   
   @property
-  def script(self) -> str:
-    if hasattr(self, 'chat_history'):
-      # return the script in json dictionary 
-      json_script = re.sub(r'^```json|```$', '', self.chat_history[-1].get('content'), flags=re.MULTILINE).strip()
-      try: 
-        return json.loads(json_script)
-      except Exception(json.JSONDecodeError):
-        print(f"Error with json script, returning raw json string.")
+  def raw_script(self) -> Dict:
+    # return only the chat history concerning podcast agents
+    return self.chat_history[4:-1]
+  
+  @property
+  def script(self) -> Dict:
+    # return only the chat history concerning podcast agents
+    json_script = []
+    for c in self.raw_script:
+      try:
+        c['content'] = extract_json_code_block(c['content'])
+        json_script.append(c)
+      except Exception as e:
+        warnings.warn(f"Error parsing script: {e}, returning correct but likely incomplete script.")
         return json_script
-
+   
+  @property
+  def json_script(self) -> Dict:
+    if hasattr(self, 'chat_history'):
+      # return the script in json dictionary from `script_parser` agent
+      if 'content' in self.chat_history[-1]:
+        return extract_json_code_block(self.chat_history[-1]['content'])
+      else:
+        raise ValueError("Podcast conversation is not created correctly. Fix the script generation in `.create()`. The final user should be a script parser agent. Or access the `script` attribute referencecd from chat_history directly.")
     else:
       raise ValueError("Podcast conversation has not been created yet. Use `.create()` to create the conversation.")

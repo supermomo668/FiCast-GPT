@@ -1,4 +1,6 @@
-import json
+import json, pathlib
+from typing import Generator, AsyncGenerator
+
 class CustomJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         try:
@@ -7,7 +9,7 @@ class CustomJSONEncoder(json.JSONEncoder):
             return str(obj)
 
 
-def collect_audio(audio_generator: generator[bytearray] | AsyncGenerator[bytearray]):
+def collect_audio(audio_generator: Generator[bytearray, None, None] | AsyncGenerator[bytearray, None, None]):
     audio_data = bytearray()
     for chunk in audio_generator:
       audio_data.extend(chunk)
