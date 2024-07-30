@@ -10,7 +10,7 @@ readme = "README.md"
 python = ">=3.11,<3.13"
 elevenlabs = "^1.5.0"
 gender-guesser = "^0.4.0"
-thought-agents = {path = "../rag-agents/thought-agents"}
+thought-agents = { version = "0.3.1", source = "test-pypi" }
 
 [tool.poetry.group.test.dependencies]
 pytest = "^6.2.4"
