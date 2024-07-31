@@ -115,8 +115,7 @@ class Podcast(Conversation):
     json_script = []
     for c in self.raw_script:
       try:
-        c['content'] = extract_json_code_block(c['content'])
-        json_script.append(c)
+        json_script.append(extract_json_code_block(c['content']))
       except Exception as e:
         warnings.warn(f"Error parsing script: {e}, returning correct but likely incomplete script.")
         return json_script

@@ -9,7 +9,7 @@ class CustomJSONEncoder(json.JSONEncoder):
             return str(obj)
 
 
-def collect_audio(audio_generator: Generator[bytearray, None, None] | AsyncGenerator[bytearray, None, None]):
+def collect_audio(audio_generator: Generator[bytearray, None, None] | AsyncGenerator[bytearray, None]):
     audio_data = bytearray()
     for chunk in audio_generator:
       audio_data.extend(chunk)

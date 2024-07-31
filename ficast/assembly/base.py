@@ -30,6 +30,9 @@ class ConvCast(BaseModel):
         Converts the conversation to an audio podcast.
     """
     conversation: Conversation
+    model_config = {
+        "arbitrary_types_allowed": True
+    }
     def __init__(
         self, 
         conversation: Conversation, 
