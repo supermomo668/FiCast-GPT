@@ -1,3 +1,10 @@
+## hydra logs
+outputs/
+
+## other outputs
+ficast-outputs/
+!ficast-outputs/samples
+
 # General
 **/*.
 
