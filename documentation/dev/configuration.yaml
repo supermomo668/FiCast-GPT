@@ -1,0 +1,44 @@
+
+The following is the pre-configured Dict Configuration structure of the Podcast Conversation configuration. It is meant to be pre-initialized such that users do not have to interact with it.
+
+```python
+  def to_conversation_config(self) -> ConversationConfig:
+    hosts = [p for p in self.participants if p.mode == 'podcast']
+    guests = [p for p in self.participants if p.mode != 'podcast']
+    character_cfg = PodcastCharacters(
+        hosts=[Person(name=h.name, description=h.description) for h in hosts],
+        guests=[Person(name=g.name, description=g.description) for g in guests]
+    )
+    podcast_config = PodcastConfig(
+        topic=self.topic,
+        n_rounds=self.n_rounds,
+        character_cfg=character_cfg
+    )
+    llm_config = AutogenLLMConfig(
+        cache_seed=42,
+        temperature=0.0,
+        timeout=120,
+        config_list=[{'model': 'gemini-1.5-pro', 'api_key': '<Gemini API Key>', 'api_type': 'google'}],
+        filter_dict={'model': ['gemini-1.5-pro']},
+        config_list_path='conf/OAI_CONFIG_LIST.txt'
+    )
+    system_prompts = {
+        'research': {
+            'coder': "You are the coder. You write python/shell code to solve the task presented...",
+            'research_coder': "You are the Coder. You write python/shell code to gather relevant web information for the task...",
+            'executor': 'Executor. Execute the code written by the Coder and report the result.',
+            'informer': 'Provide the summarized biography of the podcast guests...'
+        },
+        'podcast': {
+            'initiation': 'You are going to prepare the host for a podcast among: {characters}...',
+            'host': 'As yourself: {0}, respond to the conversation.',
+            'guest': 'As yourself: {0}, respond to the conversation.',
+            'script_parser': '{0}'
+        }
+    }
+    return ConversationConfig(
+        llm_config=llm_config,
+        podcast_config=podcast_config,
+        system_prompts=system_prompts
+    )
+```
