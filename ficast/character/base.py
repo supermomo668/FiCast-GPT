@@ -43,7 +43,7 @@ class Character(Person):
 
     Methods:
     --------
-    introduce():
+    introduce()
         Returns an introduction string for the podcaster.
     """
     cfg: ConversationConfig = default_cfg
@@ -52,15 +52,17 @@ class Character(Person):
     role: str
     description: str
     model: str
+    gender: str = None
     class Config:
         arbitrary_types_allowed = True
     def __init__(
         self, 
         name: str,
-        role: str = "participant",
         description: str = "",
-        system_message: str = "As yourself: {name}, respond to the conversation.",
+        role: str = "participant",
         model: str = "gemini-1.5-pro",
+        gender: str = None,
+        system_message: str = "As yourself: {name}, respond to the conversation.",
         ):
         super().__init__(name=name, description=description, role=role, model=model)
         self.cfg.llm_config = AutogenLLMConfig(**{"filter_dict": {"model": [model]}})
@@ -77,5 +79,3 @@ class Character(Person):
     @property
     def __allowed_roles__(self):
         return ["*"]
-# default character
-

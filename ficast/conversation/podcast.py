@@ -119,6 +119,7 @@ class Podcast(Conversation):
       except Exception as e:
         warnings.warn(f"Error parsing script: {e}, returning correct but likely incomplete script.")
         return json_script
+    return json_script
    
   @property
   def json_script(self) -> Dict:

@@ -31,14 +31,14 @@ class ConvCast(BaseModel):
     """
     conversation: Conversation
     model_config = {
-        "arbitrary_types_allowed": True
+        "arbitrary_types_allowed": True,
+        "populate_by_name": True,  # Updated for Pydantic V2
+        "protected_namespaces": (),  # Avoid conflict with 'model_'
     }
-    def __init__(
-        self, 
-        conversation: Conversation, 
-        **kwargs: Any
-        ):
-        super().___init__(**kwargs)
+    
+    def __init__(self, conversation: "Conversation", **kwargs: Any):
+        super().__init__(**kwargs)
+        self.conversation = conversation
 
     @abstractmethod
     def to_podcast(self, text: str) -> str:
@@ -46,8 +46,3 @@ class ConvCast(BaseModel):
         # TODO: Implement conversion to audio podcast
         print("Converting conversation to audio podcast.")
         raise NotImplementedError
-    
-    
-    
-
-    

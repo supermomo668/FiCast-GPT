@@ -1,18 +1,18 @@
 {
-    "voice_id": "EXAVITQu4vr4xnSDxMaL",
-    "name": "Sarah",
+    "voice_id": "JBFqnCBsd6RMkjVDRZzb",
+    "name": "George",
     "samples": null,
     "category": "premade",
-    "fine_tuning": "is_allowed_to_fine_tune=True finetuning_state=None verification_failures=[] verification_attempts_count=0 manual_verification_requested=False language='en' finetuning_progress=None message={} dataset_duration_seconds=None verification_attempts=None slice_ids=None manual_verification=None state={} progress={}",
+    "fine_tuning": "is_allowed_to_fine_tune=True state={'eleven_turbo_v2': 'fine_tuned'} verification_failures=[] verification_attempts_count=0 manual_verification_requested=False language='en' progress={} message={'eleven_turbo_v2': ''} dataset_duration_seconds=None verification_attempts=None slice_ids=None manual_verification=None finetuning_state=None",
     "labels": {
-        "description": "soft",
-        "gender": "female",
-        "accent": "american",
-        "use_case": "news",
-        "age": "young"
+        "use_case": "narration",
+        "gender": "male",
+        "description": "warm",
+        "age": "middle aged",
+        "accent": "British"
     },
     "description": null,
-    "preview_url": "https://storage.googleapis.com/eleven-public-prod/premade/voices/EXAVITQu4vr4xnSDxMaL/01a3e33c-6e99-4ee7-8543-ff2216a32186.mp3",
+    "preview_url": "https://storage.googleapis.com/eleven-public-prod/premade/voices/JBFqnCBsd6RMkjVDRZzb/e6206d1a-0721-4787-aafb-06a6e705cac5.mp3",
     "available_for_tiers": [],
     "settings": null,
     "sharing": null,

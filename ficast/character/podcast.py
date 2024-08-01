@@ -1,7 +1,10 @@
+import warnings
 import autogen 
 
+import gender_guesser.detector as gd
+
 from thought_agents.dialogue.utils import termination_msg
-from thought_agents.ontology.parser.dialogue import monologue_parser
+from thought_agents.ontology.parser.dialogue import dialogue_parser
 
 from .base import Character
 
@@ -26,21 +29,27 @@ class Podcaster(Character):
     def __init__(
       self, 
       name: str,
+      description: str,
+      model: str = "gemini-1.5-pro",
       role: str = "guest",
-      description: str = "",
+      gender: str = None,
       system_message: str = "As yourself: {name}, respond to the conversation.",
-      model: str = "gemini-1.5-pro"
       ):
       super().__init__(
         name=name, 
         description=description, 
         system_message=system_message, 
         model=model, 
-        role=role
+        role=role,
+        gender=gender
       )
       self.system_message = self.cfg.system_prompts['podcast'][role].format_map({
-        "name": name, "parser": monologue_parser.get_format_instructions()
+        "name": name, "parser": dialogue_parser.get_format_instructions()
       })
+      gender_detector = gd.Detector()
+      if self.gender is None:
+        self.gender = gender_detector.get_gender(name.split()[0])
+        warnings.warn(f"Gender not specified for {name}, assigned gender for {name} as {self.gender}")
       
     def __allowed_roles__(self):
       return ["host", "guest"]
@@ -55,5 +64,3 @@ class Podcaster(Character):
         description=self.description,
         system_message=self.system_message
       )
-
-

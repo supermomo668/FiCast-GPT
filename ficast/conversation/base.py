@@ -65,15 +65,17 @@ class Conversation:
   def _validate_new_participants(self, participants: List[Character]):
     for p in participants:
       if p in self.participants:
-        warnings.warn(f"Participant {p} is already in the conversation")
-      
+        warnings.warn(f"Participant `{p.name}` is already in the conversation. Skipping")
+        
   @beartype  
   def add(self, participants: List[CH] | CH):
     """Add participants to the conversation."""
+    self._validate_new_participants(participants)
     if issubclass(Character, participants.__class__):
       participants = [participants]
-    self._validate_new_participants(participants)
-    self.participants.extend(participants)
+    for p in participants:
+      if p not in self.participants:
+        self.participants.append(p)
       
   @property
   def n_participants(self) -> int:
