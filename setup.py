@@ -1,5 +1,5 @@
 from setuptools import setup, find_packages
-
+from pathlib import Path
 
 extra_reqs = {
     "dev": [
@@ -9,10 +9,17 @@ extra_reqs = {
     ],
 }
 
+# The directory containing this file
+HERE = Path(__file__).parent
+
+# The text of the README file
+README = (HERE / "README.md").read_text()
+
 setup(
     name="podcast_gpt",
     version="0.1",
     description="A Python package for processing podcasts using GPT",
+    long_description=README,
     author="Matthew",
     author_email="mmym.ezout@gmail.com",
     url="https://github.com/alex/podcast_agent_gpt",
