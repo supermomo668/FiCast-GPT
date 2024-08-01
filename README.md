@@ -24,7 +24,7 @@ Tool for processing & producing musical podcasts w/ thoughtful multi-agents
   python3 -m pip install -i https://test.pypi.org/simple/ ficast-gpt
   ```
 * Required environment / keys configuration
-  You must set up conf/OAI_CONFIG_LIST.txt following the syntax of [PyAutogen](https://github.com/microsoft/autogen), the framework this package is based on to configure your LLM clients.
+  1. `conf/OAI_CONFIG_LIST.txt` following the syntax of [PyAutogen](https://github.com/microsoft/autogen), the framework this package is based on to configure your LLM clients.
   * Note:
     Please add the followin safety settings to the model configuration to avoid safety-related filter errors during generation.
     ```
@@ -47,7 +47,9 @@ Tool for processing & producing musical podcasts w/ thoughtful multi-agents
       }
       ]
       ```
-
+  2. 
+    ElevenLabs Transcription API Key in `.env`
+      Set 
 ## Usage
 
 * Environment
