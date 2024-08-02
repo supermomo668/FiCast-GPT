@@ -5,9 +5,9 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 ### Installation notes
 remove package.json, then do:
 ```
-npm install --legacy-peer-deps
+npm i
+npm audit fix
 npx shadcn-ui@latest init
-npm install framer-motion --legacy-peer-deps
 ```
 
 ### Starting the Application
