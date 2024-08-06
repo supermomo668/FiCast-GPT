@@ -12,7 +12,9 @@ import { CharacterImages } from "@/app/components/CHARACTERS";
 import { Pinecone } from "@pinecone-database/pinecone";
 import OpenAI from "openai";
 
-const openaiSdk = new OpenAI();
+const openaiSdk = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 const pc = new Pinecone({
   apiKey: process.env.PINECONE_API_KEY!,
@@ -29,8 +31,10 @@ async function getMessagesNewBackend(
   for (const speaker of speakers) {
     search.append("speakers", speaker);
   }
+  console.log("here");
   const resp = await fetch(
-    `https://direct-lacewing-merry.ngrok-free.app/conversation?${search.toString()}`
+    // `https://direct-lacewing-merry.ngrok-free.app/conversation?${search.toString()}`
+    "http://104.197.25.48:42110/script"
   );
   console.log(resp.url);
   if (!resp.ok) {
@@ -118,7 +122,7 @@ export async function getPodcast(
   weatherUI.update(<>...</>);
 
   const getMessages = useOpenai ? getMessagesOpenAI : getMessagesNewBackend;
-
+  console.log("here2");
   getMessages(speakers, topic, (messages) => {
     if (Array.isArray(messages))
       weatherUI.update(

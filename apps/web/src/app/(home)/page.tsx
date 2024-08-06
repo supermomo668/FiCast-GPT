@@ -13,7 +13,7 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between  p-24 text-white bg-gradient-to-b bg-slate-900 from-slate-900 to-purple-900/30">
-      {/* <label className="text-xs fixed top-2 right-4 accent-purple-500 text-slate-300 ">
+      <label className="text-xs fixed top-2 right-4 accent-purple-500 text-slate-300 ">
         Use OpenAI directly{" "}
         <input
           className="align-center"
@@ -21,7 +21,8 @@ export default function Home() {
           type="checkbox"
           onChange={() => setOpenai((current) => !current)}
         />
-      </label> */}
+      </label>
+
       {!data && (
         <Landing
           onStart={async (data) => {
