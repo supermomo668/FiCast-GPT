@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List, TypeVar
 import warnings
+from datetime import datetime
 
 import autogen
 
@@ -39,6 +40,8 @@ class Conversation:
   output_format: str
   participants: List[Character] = []
   conv_mode: str = "podcast"
+  created_at: datetime 
+
   class Config:
       arbitrary_types_allowed = True
 
@@ -127,7 +130,7 @@ class Conversation:
         llm_config=cfg.llm_config.model_dump()
     )
     
-  def  create(self) -> autogen.agentchat.chat.ChatResult:
+  def create(self) -> autogen.agentchat.chat.ChatResult:
     if not hasattr(self, 'groupchat_manager'):
       # create groupchat manager if not exist 
       self._create_conv_group()
@@ -139,6 +142,7 @@ class Conversation:
       length=self.cfg.podcast_config.length
       )
     ).chat_history   # chatResult := id, chat_history
+    self.created_at = datetime.now().strftime("%Y%m%d_%H%M%S")
     return self.chat_history
     
   

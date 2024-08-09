@@ -1,6 +1,8 @@
 import json
 import re
 from typing import Any, Dict
+from pathlib import Path
+import warnings
 
 def clean_json_string(input_string):
     # Remove markdown code block delimiters and any trailing new lines
@@ -21,3 +23,29 @@ def extract_json_code_block(s: str) -> Dict[str, Any]:
         return json.loads(json_str)
     except json.JSONDecodeError as e:
         raise ValueError(f"Invalid JSON: {e}")
+
+def save_json_based_script(script_content, path: Path, option: str) -> None:
+    if option == "json":
+        with path.with_suffix(".json").open('w', encoding='utf-8') as f:
+            json.dump(script_content, f, ensure_ascii=False, indent=4)
+    elif option == "human":
+        with path.open('w', encoding='utf-8') as f:
+            for item in script_content['dialogues']:
+                if 'speaker' in item and 'dialogue' in item:
+                    speaker = item['speaker']['name']
+                    dialogue = item['dialogue']
+                    f.write(f"{speaker}: {dialogue}\n")
+                else:
+                    warnings.warn(f"Invalid script item: {item}")
+
+def save_raw_based_script(script_content, path: Path, option: str) -> None:
+    if option == "text":
+        with path.open('w', encoding='utf-8') as f:
+            for item in script_content:
+                f.write(item['content'] + '\n')
+    elif option == "html":
+        with path.with_suffix(".html").open('w', encoding='utf-8') as f:
+            f.write("<html><body>\n")
+            for item in script_content:
+                f.write(f"<p>{item['content']}</p>\n")
+            f.write("</body></html>")

@@ -1,89 +1,66 @@
-from typing import List, Generator
-from abc import abstractmethod
-from collections.abc import AsyncGenerator
-import os, dotenv, json, pathlib
 from functools import lru_cache
+from typing import Any, Dict, List, Generator, Union
+from collections.abc import AsyncGenerator
+import dotenv
 
-import random
-
-from elevenlabs import play, voices, VoiceSettings, Voice
-from elevenlabs.client import ElevenLabs, AsyncElevenLabs
+from elevenlabs import Voice, play, voices
 
 from .utils import CustomJSONEncoder
+from .clients import tts_client_factory
 
 dotenv.load_dotenv()
 
-class ElevenSpeech:
-  voice_settings = VoiceSettings(
-    stability=random.uniform(0.3, 1), 
-    similarity_boost=random.random(),
-    style=random.random(),
-    use_speaker_boost=True
-  )
-  meta_dir = pathlib.Path("ficast-outputs/dialogue")
-  def __init__(self):
-    self.client = ElevenLabs(
-      api_key=os.environ.get("ELEVENLABS_API_KEY"),  # Defaults to ELEVEN_API_KEY
-      # httpx_client=httpx.AsyncClient()
-    )
-    self.meta_dir.mkdir(exist_ok=True, parents=True)
-    
-  @property
-  @lru_cache(maxsize=None)
-  def all_voices(self, save_meta=False) -> List[Voice]:
+class TextToSpeech:
+  def __init__(self, client_type: str, **kwargs: Any):
     """
-    Returns a list of all available voices.
+    Initializes the TextToSpeech object.
+
     Args:
-        save_meta (bool, optional): Whether to save the metadata of the retrieved voices. Defaults to False.
+        client_type (str): The type of TTS client to use.
+          Supported: 'api', 'elevenlabs'
     Returns:
-        List[Voice]: A list of Voice objects representing the available voices
+        None
     """
-    response = self.client.voices.get_all()
-    self.voice_metainfo = [v.__dict__ for v in response.voices]
-    print(f"Available voices:\n", self.voice_metainfo)
-    if save_meta:
-      with open(self.meta_dir / 'voice_metainfo.json', 'w') as f:
-        json.dump(self.voice_metainfo, f, indent=4, cls=CustomJSONEncoder)
-    return response.voices
-  
+    #### Init TTS Client
+    self.client = tts_client_factory(client_type, **kwargs)
+
   @property
   def n_voices(self):
-    return len(self.all_voices())
+    return len(self.all_voices_by_id)
 
-  def get_voice(self, voice_id, save_meta=True):
+  @property
+  @lru_cache(maxsize=None)
+  def all_voices_by_id(self) -> Dict[str, Union[Voice, str, Any]]:
+    return self.client.all_voices_by_id
+  
+  def get_voice(self, voice_id:str) -> Union[Voice, str]:
     """
     Retrieves a voice from the list of available voices based on the provided voice ID.
     Args:
-        voice_id (int): The ID of the voice to retrieve.
+        voice (str): The name of the voice to retrieve.
         save_meta (bool, optional): Whether to save the metadata of the retrieved voice. Defaults to True.
         output_dir (pathlib.Path, optional): The directory to save the metadata file. Defaults to "output/speech".
+    Return: 
+      The Voice object corresponding to the specified voice ID that `client.text_to_speech` identity with for generation
     """
-    idx = [i for i, v in enumerate(self.all_voices) if v.voice_id == voice_id]
-    if len(idx) == 0:
-      raise ValueError(f"Voice {voice_id} not found")
-    # len(idx) == 1
-    idx = idx[0]
-    if save_meta:
-      with open(self.meta_dir / 'last_used_voice.json', 'w') as f:
-        json.dump(self.voice_metainfo[idx], f, indent=4, cls=CustomJSONEncoder)
-    return self.all_voices[idx]
+    return self.all_voices_by_id[voice_id]
 
   def synthesize(
     self,
-    voice_id: int,
-    text: str="Hello! 你好! Hola! नमस्ते! Bonjour! こんにちは! مرحبا! 안녕하세요! Ciao! Cześć! Привіт! வணக்கம்!",
+    text: str, voice_id: int, **kwargs
     ) -> Generator[bytearray, None, None] | AsyncGenerator[bytearray, None, None]:
-    audio = self.client.generate(
+    audio = self.client.text_to_speech(
       text=text, 
       voice=self.get_voice(voice_id),
-      model="eleven_multilingual_v2",
+      **kwargs
     )
     return audio 
+
 
 if __name__=="__main__":
   def main():
     from .utils import collect_audio, save_bytes_to_mp3
-    dialogue = ElevenSpeech()
+    dialogue = TextToSpeech('elevenlabs')
     gen = dialogue.synthesize((dialogue.all_voices)[0].voice_id, "Hi David Sinclair, how have you been")
     audio = collect_audio(gen)
     save_bytes_to_mp3(audio, 'ficast-outputs/dialogue/test.mp3')

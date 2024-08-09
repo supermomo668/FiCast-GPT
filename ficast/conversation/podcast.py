@@ -3,7 +3,8 @@ from typing import Dict, List
 import warnings
 from beartype import beartype
 import re, json
-
+from datetime import datetime
+from pathlib import Path
 import autogen
 
 from thought_agents.ontology.config.dialogue import ConversationConfig, PodcastConfig
@@ -15,7 +16,7 @@ from thought_agents.dialogue.agents import agent_registry
 
 from thought_agents.dialogue.transition import get_state_transition
 from .config import conv_cfg
-from .utils import extract_json_code_block
+from .utils import extract_json_code_block, save_json_based_script, save_raw_based_script
 
 
 class Podcast(Conversation):
@@ -105,10 +106,10 @@ class Podcast(Conversation):
     )
   
   @property
-  def raw_script(self) -> Dict:
+  def raw_script(self) -> Dict[str, str]:
     # return only the chat history concerning podcast agents
     return self.chat_history[4:-1]
-  
+    
   @property
   def script(self) -> Dict:
     # return only the chat history concerning podcast agents
@@ -131,3 +132,22 @@ class Podcast(Conversation):
         raise ValueError("Podcast conversation is not created correctly. Fix the script generation in `.create()`. The final user should be a script parser agent. Or access the `script` attribute referencecd from chat_history directly.")
     else:
       raise ValueError("Podcast conversation has not been created yet. Use `.create()` to create the conversation.")
+
+  def save_script(self, path: str = None, option: str = "json") -> None:
+    if not hasattr(self, 'chat_history'):
+      raise ValueError("Podcast conversation has not been created yet. Use `.create()` to create the conversation.")
+    options={"json", "human", "text", "html"}
+    if path is None:
+      output_dir = Path("ficast-outputs/scripts")
+      output_dir.mkdir(parents=True, exist_ok=True)
+      path = output_dir / f"script_{self.created_at}_{option}.txt"
+    else:
+      path = Path(path)
+    # Call the appropriate function based on the option
+    if option.lower() in ["json", "human"]:
+      save_json_based_script(self.json_script, path, option)
+    elif option.lower() in ["text", "html"]:
+      save_raw_based_script(self.raw_script, path, option)
+    else:
+      raise ValueError(f"Unsupported option '{option}' provided. Supported options are 'json', 'text', 'html', and 'human'.")
+    print(f"Script saved to {path}")

@@ -25,31 +25,32 @@ Tool for processing & producing musical podcasts w/ thoughtful multi-agents
   ```
 * Required environment / keys configuration
   1. `conf/OAI_CONFIG_LIST.txt` following the syntax of [PyAutogen](https://github.com/microsoft/autogen), the framework this package is based on to configure your LLM clients.
-  * Note:
-    Please add the followin safety settings to the model configuration to avoid safety-related filter errors during generation.
-    ```
-    "safety_settings": [
-      {
-          "category": "HARM_CATEGORY_HARASSMENT",
-          "threshold": "BLOCK_NONE"
-      },
-      {
-          "category": "HARM_CATEGORY_HATE_SPEECH",
-          "threshold": "BLOCK_NONE"
-      },
-      {
-          "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-          "threshold": "BLOCK_NONE"
-      },
-      {
-          "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-          "threshold": "BLOCK_NONE"
-      }
-      ]
+      * Note: Please add the followin safety settings to the model configuration to avoid safety-related filter errors during generation.
       ```
-  2. 
-    ElevenLabs Transcription API Key in `.env`
-      Set 
+      "safety_settings": [
+        {
+            "category": "HARM_CATEGORY_HARASSMENT",
+            "threshold": "BLOCK_NONE"
+        },
+        {
+            "category": "HARM_CATEGORY_HATE_SPEECH",
+            "threshold": "BLOCK_NONE"
+        },
+        {
+            "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            "threshold": "BLOCK_NONE"
+        },
+        {
+            "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+            "threshold": "BLOCK_NONE"
+        }
+        ]
+        ```
+  2. ElevenLabs Transcription API Key in `.env` as such (see [example](.example.env))
+      ```
+      ELEVENLABS_API_KEY=<Your_Elevelabs_API_Key>
+      ```
+      Optionally, you could [use Tortoise-TTS for Local Inference](#optional-using-tortoise-tts-for-local-inference). This set-up is more complex and is currently under development.
 ## Usage
 
 * Environment
@@ -150,6 +151,8 @@ If you prefer to use the Tortoise-TTS for local inference instead of the ElevenL
 
 ### [Alternative] Steps to Pull the Tortoise-TTS Submodule
 
+- **Only the commands if you need the submodule:**
+
 1. **Initialize and Update the Submodule:**
 
     ```sh
@@ -163,14 +166,7 @@ If you prefer to use the Tortoise-TTS for local inference instead of the ElevenL
     git submodule add https://github.com/neonbjb/tortoise-tts.git path/to/tortoise-tts
     ```
 
-3. **Install Tortoise-TTS Dependencies:**
-
-    ```sh
-    cd path/to/tortoise-tts
-    pip install -r requirements.txt
-    ```
-
-4. **Setup Tortoise-TTS for Inference:**
+3. **Setup Tortoise-TTS for Inference:**
    
     Follow any additional setup instructions provided in the `tortoise-tts` repository to complete the configuration for local inference.
 
@@ -178,15 +174,6 @@ If you prefer to use the Tortoise-TTS for local inference instead of the ElevenL
 
 If you do not need to use the Tortoise-TTS submodule for local inference, **do not** run the submodule initialization and update commands. Additionally, you can avoid pulling the submodule by skipping the steps mentioned above.
 
-- **Do not run the following commands if you do not need the submodule:**
-
-    ```sh
-    git submodule init
-    git submodule update
-    git submodule add https://github.com/neonbjb/tortoise-tts.git path/to/tortoise-tts
-    ```
-
-By following these guidelines, you can ensure that your repository is set up correctly whether or not you choose to use the Tortoise-TTS submodule for local inference.
 
 ## Contributing
 

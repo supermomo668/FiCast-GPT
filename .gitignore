@@ -1,3 +1,6 @@
+## dockr Data
+data/
+
 ## hydra logs
 outputs/
 
@@ -63,6 +66,9 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
+
+#ngrok
+.ngrok
 
 # Translations
 *.mo

@@ -71,12 +71,11 @@ class FiCast(ConvCast):
         for participant in self.conversation.participants:
             gender = participant.gender.lower()
             if gender not in ['male', 'female']:
-                gender = 'andy'  # Default to 'andy' if gender is not male or female
+                gender = 'andy'  # Default to 'andy'
             nth = len([p for p in self.conversation.participants if p.gender.lower() == gender])
             voice_mapping[participant.name] = self.dialogue_synthesizer.get_nth_voice_by_gender(nth - 1, gender)
 
         # Iterate through the json_script to process each dialogue
-        
         for entry in tqdm.tqdm(scipt_src, desc="Processing script entries"):
             speaker_name = entry["speaker"]["name"]
             # Get the voice for the speaker

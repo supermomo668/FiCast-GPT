@@ -1,3 +1,6 @@
 [submodule "tortoise-tts"]
 	path = tortoise-tts
 	url = https://github.com/neonbjb/tortoise-tts.git
+[submodule "apps/youtube/api-samples"]
+	path = apps/youtube/api-samples
+	url = git@github.com:youtube/api-samples.git

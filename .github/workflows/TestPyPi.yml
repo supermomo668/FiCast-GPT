@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'test'
 
 jobs:
   build-and-publish:
@@ -19,23 +25,42 @@ jobs:
         python-version: '3.x'
 
     - name: Install Poetry
-      run: curl -sSL https://install.python-poetry.org | python3 -
+      run: curl -sSL https://install.python-poetry.org | python3 - -- --no-interaction
 
-    - name: Configure Poetry
+    - name: Set environment variable
+      run: echo "ENVIRONMENT=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
+
+    - name: Configure Poetry for test environment
+      if: env.ENVIRONMENT == 'test'
       env:
-        TEST_PYPI_TOKEN: ${{ secrets.test.TEST_PYPI_TOKEN }}
+        TEST_PYPI_TOKEN: ${{ secrets.TEST_PYPI_TOKEN }}
       run: |
         poetry config pypi-token.test-pypi $TEST_PYPI_TOKEN
-    
+
+    - name: Configure Poetry for production environment
+      if: env.ENVIRONMENT == 'production'
+      env:
+        PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+      run: |
+        poetry config pypi-token.pypi $PYPI_TOKEN
+
     - name: Install dependencies
       run: poetry install
 
     - name: Increment version
-      run: |
-        poetry version patch
-    
+      run: poetry version patch
+
     - name: Build package
       run: poetry build
 
     - name: Publish package to TestPyPI
+      if: env.ENVIRONMENT == 'test'
+      env:
+        TEST_PYPI_TOKEN: ${{ secrets.TEST_PYPI_TOKEN }}
       run: poetry publish --repository test-pypi --build
+
+    - name: Publish package to PyPI
+      if: env.ENVIRONMENT == 'production'
+      env:
+        PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+      run: poetry publish --build
