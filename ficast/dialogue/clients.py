@@ -3,6 +3,7 @@ from pathlib import Path
 import os
 from typing import List, Generator, Dict
 from functools import lru_cache
+from fastapi import requests
 import gender_guesser.detector as gd
 
 import random
@@ -73,28 +74,25 @@ class ElevenLabsClient(BaseTTSClient):
         audio = self.client.generate(
           text=text, voice=voice, model=kwargs.get('model', self.model))
         return audio
-
-    def get_queue_status(self):
-        # Implement if needed
-        pass
-
-    def get_task_status(self, task_id: str):
-        # Implement if needed
-        pass
-
       
 class APIClient(BaseTTSClient):
-    def __init__(self, base_url: str=""):
-        self.base_url = base_url
-        self.client = httpx.Client(base_url=base_url, timeout=httpx.Timeout(40.0, connect=60.0))
-
-        try:
-            response = self.client.get(f"{self.base_url}")
-            response.raise_for_status()
-        except httpx.RequestError as exc:
-            raise httpx.RequestError(f"An error occurred while requesting {exc.request.url!r}.") from exc
-        except httpx.HTTPStatusError as exc:
-            raise httpx.HTTPStatusError(f"Error response {exc.response.status_code} while requesting {exc.request.url!r}.") from exc
+    def __init__(self, base_url: str=None, api_key: str = None):
+        if not base_url:
+            base_url = os.getenv('TTS_API_BASE_URL')
+            assert base_url, "API base URL must be provided for FiCastTTS client or set the `TTS_API_BASE_URL` environment variable with your base URL"
+        if not api_key: 
+            api_key = os.getenv('TTS_API_KEY')
+        assert api_key, "API key must be provided for FiCastTTS client or set the `TTS_API_KEY` environment variable with your API key"
+        self.client = httpx.Client(
+            base_url=base_url, 
+            timeout=httpx.Timeout(40.0, connect=60.0),
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {os.getenv('TTS_API_KEY')}"
+            }
+        )
+        if not self.ping():
+            raise ConnectionError("Ping check failed. The TTS service is not available.")
     @property
     @lru_cache(maxsize=None)
     def all_voices(self) -> List[Voice]:
@@ -104,7 +102,7 @@ class APIClient(BaseTTSClient):
             List[Voice]: A list of `Voice` objects representing all available voices.
         """
         gender_detector = gd.Detector()
-        voice_names = self.client.get(f"{self.base_url}/voices").json()["voices"]
+        voice_names = self.client.get(f"/voices").json()["voices"]
         vs = []
         for n, name in enumerate(voice_names):
             vs.append(Voice(
@@ -124,7 +122,17 @@ class APIClient(BaseTTSClient):
         return {
             voice.voice_id: voice for voice in self.all_voices
         }
-
+    def ping(self) -> bool:
+        try:
+            response = self.client.get("/ping")
+            try:
+                response.raise_for_status()
+            except httpx.RequestError as exc:
+                raise httpx.RequestError(f"An error occurred while requesting {exc.request.url!r}.") from exc
+            return response.status_code == 200 and response.json().get("status") == "ok"
+        except Exception as e:
+            return False
+        
     def text_to_speech(
         self, text: str, voice: str, **kwargs
         ) -> Generator[bytes, None, None]:
@@ -136,26 +144,36 @@ class APIClient(BaseTTSClient):
             **kwargs: Additional keyword arguments.
                 preset (str, optional): The preset to use for speech generation. Defaults to "fast".
         """
-        # API client uses name instead of Voice objet
+        # API client uses name as voice key
         payload = {
             "text": text,
             "voice": voice.name,
             "preset": kwargs.get("preset", "fast")
         }
-        response = self.client.post(
-            f"{self.base_url}/tts", json=payload,
-            auth=(os.getenv("TTS_API_USERNAME"), os.getenv("TTS_API_PASSWORD"))
+        task_response = self.client.post(
+            f"/tts", json=payload
         )
-        response.raise_for_status()
-        for chunk in response.iter_bytes():
+        task_response.raise_for_status()
+        if "task_id" in task_response.json():
+            task_id = task_response.json()["task_id"]
+        else:
+            raise ValueError(f"Task cannot be created: {task_response.json()}")
+        # Post the result
+        long_timeout = httpx.Timeout(300.0, connect=60.0)  # Adjust the timeout as needed
+        result_response = self.client.get(
+            f"/task-result/{task_id}", 
+            timeout=long_timeout
+        )
+        result_response.raise_for_status()
+        for chunk in result_response.iter_bytes():
             yield chunk
 
     def get_queue_status(self):
-        response = self.client.get(f"{self.base_url}/queue-status")
+        response = self.client.get("/queue-status")
         response.raise_for_status()
         return response.json()
 
     def get_task_status(self, task_id: str):
-        response = self.client.get(f"{self.base_url}/task-status/{task_id}")
+        response = self.client.get(f"/task-status/{task_id}")
         response.raise_for_status()
         return response.json()

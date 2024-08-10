@@ -11,7 +11,7 @@ from pydantic import Field
 
 from ficast.assembly.base import ConvCast
 from ficast.conversation.base import Conversation
-from ficast.dialogue.synthesis import DialogueSynthesis 
+from ficast.dialogue.speech import DialogueSynthesis 
 from ficast.conversation.podcast import Podcast
 from ficast.dialogue.utils import save_bytes_to_mp3
 
@@ -34,7 +34,8 @@ class FiCast(ConvCast):
         Converts the conversation to an audio podcast.
     """
     conversation: Podcast = TypeVar("conversation", bound=Conversation)
-    dialogue_synthesizer: DialogueSynthesis = Field(default_factory=lambda: DialogueSynthesis())
+    dialogue_synthesizer: DialogueSynthesis = Field(
+        default_factory=lambda: DialogueSynthesis())
     synthesized_audio: Union[str, bytes] = None
     audio_encoding: str = "latin-1"
     model_config = {
@@ -71,7 +72,7 @@ class FiCast(ConvCast):
         for participant in self.conversation.participants:
             gender = participant.gender.lower()
             if gender not in ['male', 'female']:
-                gender = 'andy'  # Default to 'andy'
+                gender = None  # Default to 'andy'
             nth = len([p for p in self.conversation.participants if p.gender.lower() == gender])
             voice_mapping[participant.name] = self.dialogue_synthesizer.get_nth_voice_by_gender(nth - 1, gender)
 
@@ -82,7 +83,9 @@ class FiCast(ConvCast):
             if speaker_name in voice_mapping:
                 # Synthesize the dialogue text
                 for audio_chunk in self.dialogue_synthesizer.synthesize(
-                    voice_mapping[speaker_name].voice_id,  entry.get("dialogue")):
+                    entry.get("dialogue"),
+                    voice_mapping[speaker_name].voice_id
+                    ):
                     audio_segments.append(audio_chunk)
                     
                 # Optionally synthesize inner thoughts if needed
@@ -91,7 +94,7 @@ class FiCast(ConvCast):
                         voice_mapping[speaker_name].voice_id, entry.get("inner_thoughts")):
                         audio_segments.append(audio_chunk)
             else:
-                warnings.warn(f"No voice found for speaker {speaker_name}")
+                raise ValueError(f"Speaker {speaker_name} not found in voice mapping.")
 
         # Combine all audio segments into a single podcast audio stream
         self.synthesized_audio = self.combine_audio_segments(audio_segments)

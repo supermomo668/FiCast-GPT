@@ -63,5 +63,7 @@ def test_synthesize_elevenlabs(text_to_speech_elevenlabs):
 
 def test_synthesize_api(text_to_speech_api):
     audio = text_to_speech_api.synthesize(
-      text="Hello, World!", voice_id=os.getenv("TTS_API_VOICE_ID"))
+      text="Hello, World!", 
+      oice_id=os.getenv("TTS_API_VOICE_ID"))
     assert isinstance(audio, Generator)
+
