@@ -13,6 +13,8 @@ from .clients import tts_client_factory
 dotenv.load_dotenv()
 
 class TextToSpeech:
+  voice_wildcards = ["random", "any"]
+
   def __init__(self, client_type: str, **kwargs: Any):
     """
     Initializes the TextToSpeech object.
@@ -54,24 +56,49 @@ class TextToSpeech:
       The Voice object corresponding to the specified voice ID that `client.text_to_speech` identity with for generation
     """
     return self.all_voices_by_id[voice_id]
-
+  
+  def _validate_voice_type(self, voice: str | Voice) -> None:
+    if isinstance(voice, Voice):
+      return 
+    elif isinstance(voice, str):
+      if voice in self.voice_wildcards:
+        return
+      if self.all_voices_by_id.get(voice):
+        return
+      else:
+        raise ValueError(f"Voice with ID `{voice}` not found. Supported wildcard options are {self.voice_wildcards}")
+            
   def synthesize(
     self,
-    text: str, voice_id: int, **kwargs
-    ) -> Generator[bytearray, None, None] | AsyncGenerator[bytearray, None, None]:
+    text: str, 
+    voice_id: int = None, 
+    voice_name: str = "random", 
+    **kwargs
+  ) -> Generator[bytearray, None, None] | AsyncGenerator[bytearray, None, None]:
+      
+    # Check if both voice_id and voice_name are provided
+    if voice_id and voice_name:
+      warnings.warn("Both `voice_id` and `voice_name` are provided. Defaulting to `voice_id`.")
+    # If only voice_name is provided, validate it
+    if not voice_id and voice_name:
+      self._validate_voice_type(voice_name)
+      if voice_name in self.voice_wildcards:
+          voice = self.get_random_voice()
+      voice = voice_name
+    else:
+      # get voice by voice_id
+      voice = self.get_voice(voice_id)
+    # Synthesize the audio using the provided or selected voice
     audio = self.client.text_to_speech(
-      text=text, 
-      voice=self.get_voice(voice_id),
-      **kwargs
+      text=text, voice=voice, **kwargs
     )
-    return audio 
+    return audio
 
 class DialogueSynthesis(TextToSpeech):
   audio_encoding: str = "latin-1"
   def __init__(self, client_type="elevenlabs", **kwargs):
     super().__init__(client_type=client_type, **kwargs)
   
-    
   def get_nth_voice_by_gender(self, nth: int, gender: str=None):
     if gender is None:
       return self.get_random_voice()

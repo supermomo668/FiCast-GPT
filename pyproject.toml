@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "ficast"
-version = "0.1.6"
-description = ""
+version = "0.2.1"
+description = "A Python package for processing & producing PodCast overlayed with music aligned to the podcast : Fi-Casts is LoFi + Podcast"
 authors = ["supermomo668 <mymomo119966.mm@gmail.com>"]
 license = "apache2.0"
 readme = "README.md"

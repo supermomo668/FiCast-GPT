@@ -53,7 +53,10 @@ class FiCast(ConvCast):
         raise NotImplementedError("Please implement inject_music()")
     
     @lru_cache(maxsize=None)
-    def to_podcast(self, include_inner_thoughts: bool = False, use_json_script: bool = True) -> str:
+    def to_podcast(
+        self, include_inner_thoughts: bool = False, use_json_script: bool = True,
+        **tts_kwargs: Any
+        ) -> str:
         """
         Convert the conversation to an audio podcast.
 
@@ -75,7 +78,7 @@ class FiCast(ConvCast):
                 gender = None  # Default to 'andy'
             nth = len([p for p in self.conversation.participants if p.gender.lower() == gender])
             voice_mapping[participant.name] = self.dialogue_synthesizer.get_nth_voice_by_gender(nth - 1, gender)
-
+          
         # Iterate through the json_script to process each dialogue
         for entry in tqdm.tqdm(scipt_src, desc="Processing script entries"):
             speaker_name = entry["speaker"]["name"]
@@ -84,7 +87,8 @@ class FiCast(ConvCast):
                 # Synthesize the dialogue text
                 for audio_chunk in self.dialogue_synthesizer.synthesize(
                     entry.get("dialogue"),
-                    voice_mapping[speaker_name].voice_id
+                    voice_mapping[speaker_name].voice_id,
+                    **tts_kwargs
                     ):
                     audio_segments.append(audio_chunk)
                     
@@ -116,7 +120,9 @@ class FiCast(ConvCast):
         """
         if hasattr(self, 'synthesized_audio'):
            # Save the podcast to the specified path
-            save_bytes_to_mp3(self.synthesized_audio.encode(self.audio_encoding), path)
+            save_bytes_to_mp3(
+                self.synthesized_audio.encode(self.audio_encoding), path)
+            print(f"Podcast saved to {path}")
         else:
             raise RuntimeError("No podcast content attribute `synthesized_audio` to save. Please run `.to_podcast()` first to syntehsise the podcast.")
         

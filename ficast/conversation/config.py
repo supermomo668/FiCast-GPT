@@ -5,7 +5,9 @@ from hydra.core.global_hydra import GlobalHydra
 
 from thought_agents.ontology.config.dialogue import ConversationConfig, PodcastConfig # 
 
-with initialize(config_path="../../conf/dialogue"):
+with initialize(
+  config_path="../../conf/dialogue", version_base="1.1"
+  ):
   config = compose(config_name="default")
   # Convert the OmegaConf config to the Pydantic model
   podcast_dict_cfg = OmegaConf.to_container(config, resolve=True)

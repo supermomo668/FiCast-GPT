@@ -2,7 +2,7 @@ defaults:
   - base  # Inherit from base.yaml
   - characters: default
   - speech: default
-  
+  - _self_
 podcast_config:
   topic: "Democracy"
   n_rounds: ${conversation_config.n_rounds}  # Inherit from base.yaml

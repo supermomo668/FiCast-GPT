@@ -33,8 +33,10 @@ def text_to_speech_elevenlabs():
 @pytest.fixture
 def text_to_speech_api():
     return TextToSpeech(
-      client_type="api", base_url=os.getenv("TTS_API_BASE_URL")
-      )
+      client_type="api", 
+      base_url=os.getenv("TTS_API_BASE_URL"),
+      api_key=os.getenv("TTS_API_KEY")
+    )
 
 def test_n_voices_elevenlabs(text_to_speech_elevenlabs):
     n_voices = text_to_speech_elevenlabs.n_voices
@@ -57,13 +59,24 @@ def test_get_voice_api(text_to_speech_api):
     assert isinstance(voice, str)
 
 def test_synthesize_elevenlabs(text_to_speech_elevenlabs):
-    audio = text_to_speech_elevenlabs.synthesize(
-      text="Hello, World!", voice_id=os.getenv("ELEVENLABS_VOICE_ID"))
-    assert isinstance(audio, Generator)
+  audio = text_to_speech_elevenlabs.synthesize(
+    text="Hello, World!", 
+    voice_id=os.getenv("ELEVENLABS_VOICE_ID")
+  )
+  assert isinstance(audio, Generator)
 
+# test by random
 def test_synthesize_api(text_to_speech_api):
     audio = text_to_speech_api.synthesize(
+      text="Hello, World!"
+    )
+    assert isinstance(audio, Generator)
+
+# test specific id
+def test_synthesize_api_by_id(text_to_speech_api):
+    audio = text_to_speech_api.synthesize(
       text="Hello, World!", 
-      oice_id=os.getenv("TTS_API_VOICE_ID"))
+      voice_id=os.getenv("TTS_API_VOICE_ID")
+    )
     assert isinstance(audio, Generator)
 

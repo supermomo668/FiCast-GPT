@@ -1,4 +1,4 @@
-# FiCast-gpt
+# FiCast (formly FiCast-GPT)
 
 A Python package for processing &amp; producing PodCast overlayed with music aligned to the podcast :  "Fi-Casts" (LoFi + Podcast) 
 
