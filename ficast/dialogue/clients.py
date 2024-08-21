@@ -7,8 +7,10 @@ import warnings
 
 import random
 import json
+from beartype import beartype
 from fastapi import HTTPException
 import httpx
+from regex import F
 from tenacity import retry, stop_after_attempt, stop_after_delay, wait_fixed, retry_if_exception_type
 
 import gender_guesser.detector as gd
@@ -16,7 +18,7 @@ from elevenlabs.client import ElevenLabs, AsyncElevenLabs
 from elevenlabs import VoiceSettings, Voice
 import tqdm
 
-from ficast.dialogue.config import MAX_RETRY, WAIT_BETWEEN_RETRY
+from ficast.dialogue.config import CLIENT_TIMEOUT, MAX_DELAY, MAX_RETRY, WAIT_BETWEEN_RETRY
 
 from .utils import CustomJSONEncoder
 from .base import BaseTTSClient
@@ -26,11 +28,11 @@ def tts_client_factory(
   ) -> BaseTTSClient:
     if client_type.lower() == "elevenlabs":
         api_key = os.getenv("ELEVENLABS_API_KEY") if api_key is None else None
-        if api_key is None:
+        if not api_key:
             raise ValueError("API key must be provided for ElevenLabs client")
         return ElevenLabsClient(api_key=api_key)
     elif client_type.lower() == "api":
-        if base_url is None:
+        if not base_url:
             raise ValueError("Base URL must be provided for FiCastTTS client")
         return APIClient(base_url=base_url)
     else:
@@ -98,7 +100,7 @@ class APIClient(BaseTTSClient):
         
         self.client = httpx.Client(
             base_url=base_url, 
-            timeout=httpx.Timeout(40.0, connect=60.0),
+            timeout=httpx.Timeout(CLIENT_TIMEOUT),
             headers={
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {os.getenv('TTS_API_KEY')}"
@@ -169,7 +171,7 @@ class APIClient(BaseTTSClient):
         return status
     
     @retry(
-        stop=stop_after_attempt(MAX_RETRY),
+        stop=MAX_DELAY,
         wait=wait_fixed(WAIT_BETWEEN_RETRY),
         retry=retry_if_exception_type(TaskNotReadyError),
         reraise=True
@@ -179,36 +181,33 @@ class APIClient(BaseTTSClient):
         """Waits for the task to reach SUCCESS or FAILURE status."""
         while True:
             status = self._get_task_status(task_id, status_endpoint)
-            if status == 'SUCCESS':
+            if status in self.TASK_SUCCESS_CODES:
                 return
-            elif status == 'FAILURE':
+            elif status in self.TASK_FAILURE_CODES:
                 print(f"Task {task_id} failed.")
                 if kwargs.get("ignore_errors"):
-                    warnings.warn(
-                        "`ignore_errors=True` is set. Returning empty output.", UserWarning
-                    )
-                    yield b""
+                    return
                 raise RuntimeError(f"Task {task_id} failed.")
-            else:
+            elif status in self.TASK_PENDING_CODES:
                 raise self.TaskNotReadyError(f"Task {task_id} is not ready. Current status: {status}")
+            else:
+                raise ValueError(f"Unexpected task status: {status}")
 
-    @retry(
-        stop=stop_after_attempt(MAX_RETRY),
-        wait=wait_fixed(WAIT_BETWEEN_RETRY),
-        retry=retry_if_exception_type(httpx.RequestError),
-        reraise=True
-    )
+    @beartype
     def _get_task_result(
         self, task_id: str, stream:bool, result_endpoint="/task-result") -> Generator[bytes, None, None]:
         print(f"Polling for result for task...")
         try:
             with self.client.stream("GET", f"{result_endpoint}/{task_id}") as response:
+                total_size = 0
                 if stream:
-                    for chunk in tqdm.tqdm(
-                        response.iter_bytes(), desc="Streaming result..."):
+                    for chunk in tqdm.tqdm(response.iter_bytes(), desc="Streaming result..."):
+                        total_size += len(chunk)
                         yield chunk
+                    print(f"Streamed audio total size: {total_size} bytes")
                 else:
                     all_bytes = b''.join(chunk for chunk in response.iter_bytes())
+                    print(f"Streamed audio total size: {len(all_bytes)} bytes")
                     yield all_bytes
         except Exception as e:
             error_message = f"Failed to retrieve the result for task ID {task_id}: {str(e)}"
@@ -247,8 +246,16 @@ class APIClient(BaseTTSClient):
         self._wait_for_task_completion(
             task_id, status_endpoint, **kwargs)
         # Step 3: Retrieve the task result as a stream
-        yield from self._get_task_result(
-            task_id, stream, result_endpoint)
+        try:
+            yield from self._get_task_result(
+                task_id, stream, result_endpoint)
+        except Exception as e:
+            print(f"Failed to retrieve the result for task ID {task_id}: {str(e)}")
+            if kwargs.get("ignore_errors"):
+                warnings.warn(
+                    "`ignore_errors=True` is set. Returning empty output.", UserWarning
+                )
+                yield b""
     
     
     def _get_queue_status(self):

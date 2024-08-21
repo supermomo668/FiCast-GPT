@@ -1,10 +1,12 @@
+from datetime import datetime
 from functools import lru_cache
+import io
 from pathlib import Path
 import warnings
+from beartype import beartype
 import tqdm
 import hydra
 from omegaconf import DictConfig, OmegaConf
-from hydra import initialize, compose
 
 from typing import Any, TypeVar, List, Union
 from pydantic import Field
@@ -13,7 +15,7 @@ from ficast.assembly.base import ConvCast
 from ficast.conversation.base import Conversation
 from ficast.dialogue.speech import DialogueSynthesis 
 from ficast.conversation.podcast import Podcast
-from ficast.dialogue.utils import save_bytes_to_mp3
+from ficast.dialogue.utils import save_bytes_to_wav
 
 class FiCast(ConvCast):
     """
@@ -36,8 +38,8 @@ class FiCast(ConvCast):
     conversation: Podcast = TypeVar("conversation", bound=Conversation)
     dialogue_synthesizer: DialogueSynthesis = Field(
         default_factory=lambda: DialogueSynthesis())
-    synthesized_audio: Union[str, bytes] = None
-    audio_encoding: str = "latin-1"
+    audio_segments: List[bytes] = Field(default_factory=list)
+    frame_rate: int = 24000
     model_config = {
         "arbitrary_types_allowed": True
     }
@@ -68,7 +70,7 @@ class FiCast(ConvCast):
             str: The synthesized audio content of the podcast.
 
         """
-        audio_segments = []
+        self.audio_segments = []
         voice_mapping = {}
         scipt_src = self.conversation.json_script.get("dialogues") if use_json_script else self.conversation.script
         # Map each participant to a unique voice based on their gender
@@ -90,43 +92,44 @@ class FiCast(ConvCast):
                     voice_mapping[speaker_name].voice_id,
                     **tts_kwargs
                     ):
-                    audio_segments.append(audio_chunk)
+                    self.audio_segments.append(audio_chunk)
                     
                 # Optionally synthesize inner thoughts if needed
                 if include_inner_thoughts:
                     for audio_chunk in self.dialogue_synthesizer.synthesize(
                         voice_mapping[speaker_name].voice_id, entry.get("inner_thoughts")):
-                        audio_segments.append(audio_chunk)
+                        self.audio_segments.append(audio_chunk)
             else:
                 raise ValueError(f"Speaker {speaker_name} not found in voice mapping.")
 
         # Combine all audio segments into a single podcast audio stream
-        self.synthesized_audio = self.combine_audio_segments(audio_segments)
-        # Return the combined audio as the podcast content
-        return self.synthesized_audio
-
-    def combine_audio_segments(self, audio_segments: List[bytearray]) -> str:
-        """Combine all audio segments into a single audio stream."""
-        # Placeholder implementation for combining audio segments
-        # In a real implementation, you would use an audio processing library to combine bytearrays
-        combined_audio = b''.join(audio_segments)
-        return combined_audio.decode(self.audio_encoding)  # Convert bytearray to string for representation
+        print(f"Joined {len(self.audio_segments)} audio segments")
+        return b''.join(self.audio_segments)
     
-    def save_podcast(self, path: str) -> None:
+    def save_podcast(
+        self, save_path: str, save_segments: bool = False) -> None:
         """
         Save the podcast to the specified path.
         Args:
-            path (str): The path to save the podcast.
+            path (str): The directory to save the podcast.
         """
-        if hasattr(self, 'synthesized_audio'):
-           # Save the podcast to the specified path
-            save_bytes_to_mp3(
-                self.synthesized_audio.encode(self.audio_encoding), path)
-            print(f"Podcast saved to {path}")
-        else:
-            raise RuntimeError("No podcast content attribute `synthesized_audio` to save. Please run `.to_podcast()` first to syntehsise the podcast.")
+        save_path = Path(save_path)
+        save_path = save_path/f"my_podcast-{datetime.now().strftime('%Y%m%d_%H%M')}"
+        if save_segments:
+            save_path.mkdir(parents=True, exist_ok=True)
         
-    
+        if hasattr(self, 'audio_segments'):        
+            # Save the full podcast as a WAV file
+            save_bytes_to_wav(
+                b"".join(self.audio_segments), save_path/"podcast.wav", framerate=self.frame_rate)
+
+        if save_segments:
+            for i, audio_chunk in enumerate(self.audio_segments):
+                save_bytes_to_wav(audio_chunk, save_path/f"{i}.wav", framerate=self.frame_rate)
+            print(f"Content saved to {save_path}")
+        else:
+            raise RuntimeError("No podcast content attribute `synthesized_audio` to save. Please run `.to_podcast()` first to synthesize the podcast.")
+
     def __hash__(self):
         # Define a hash function based on the fields that uniquely identify the object
         return hash((self.conversation,))
@@ -147,4 +150,5 @@ def main(cfg: DictConfig) -> None:
 
 
 if __name__ == "__main__":
+    from hydra import initialize, compose
     main()

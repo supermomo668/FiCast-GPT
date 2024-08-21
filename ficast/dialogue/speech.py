@@ -3,6 +3,7 @@ import random
 from typing import Any, Dict, List, Generator, Union
 from collections.abc import AsyncGenerator
 import warnings
+from beartype import beartype
 import dotenv
 
 from elevenlabs import Voice, play, voices
@@ -67,11 +68,12 @@ class TextToSpeech:
         return
       else:
         raise ValueError(f"Voice with ID `{voice}` not found. Supported wildcard options are {self.voice_wildcards}")
-            
+  
+  @beartype
   def synthesize(
     self,
     text: str, 
-    voice_id: int = None, 
+    voice_id: str = None, 
     voice_name: str = "random", 
     **kwargs
   ) -> Generator[bytearray, None, None] | AsyncGenerator[bytearray, None, None]:
@@ -89,10 +91,9 @@ class TextToSpeech:
       # get voice by voice_id
       voice = self.get_voice(voice_id)
     # Synthesize the audio using the provided or selected voice
-    audio = self.client.text_to_speech(
+    return self.client.text_to_speech(
       text=text, voice=voice, **kwargs
     )
-    return audio
 
 class DialogueSynthesis(TextToSpeech):
   audio_encoding: str = "latin-1"
