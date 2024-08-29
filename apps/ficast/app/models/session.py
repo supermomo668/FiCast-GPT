@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 
 # Load environment variables
 load_dotenv()
@@ -13,7 +13,9 @@ assert DATABASE_URL, "DATABASE_URL must be set in the environment variables."
 engine = create_engine(DATABASE_URL)
 
 # Create a configured "Session" class
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SessionLocal = sessionmaker(
+    autocommit=False, autoflush=False, bind=engine)
+ScopedSession = scoped_session(SessionLocal)
 
 def get_db():
     """Yields a database session object. This method is a context manager."""

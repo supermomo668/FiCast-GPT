@@ -13,9 +13,10 @@ logging.basicConfig(
     handlers=[
         logging.FileHandler("app_debug.log"),  # Log to a file named `app_debug.log`
         logging.StreamHandler()  # Also log to console
-    ]
+    ],
 )
 logger = logging.getLogger(__name__)
+logger.propagate = False
 
 # Set the logging level for multipart to WARNING or higher
 logging.getLogger("multipart").setLevel(logging.WARNING)

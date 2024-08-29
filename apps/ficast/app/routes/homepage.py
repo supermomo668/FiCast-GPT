@@ -1,48 +1,112 @@
-# Helper function to generate HTML for curl examples
+import html
+
 def generate_curl_example(description: str, command: str) -> str:
+    # Escape special HTML characters to ensure correct rendering
+    command_escaped = html.escape(command).replace("\\", "\\\\").replace("\n", "<br>").replace(" ", "&nbsp;")
     return f"""
-    <h3>{description}</h3>
-    <pre><code>{command}</code></pre>
+    <div class="curl-example">
+        <h3>{description}</h3>
+        <pre><code>{command_escaped}</code></pre>
+    </div>
     """
 
-# Helper function to generate the full HTML content
 def generate_homepage_html() -> str:
     html_content = """
-    <html>
+    <html lang="en">
         <head>
-            <title>FiCast-TTS Documentation</title>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>FiCast-TTS API Documentation</title>
             <style>
                 body {{
-                    font-family: Arial, sans-serif;
-                    margin: 40px;
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    background-color: #f8f9fa;
+                    color: #343a40;
+                    margin: 0;
+                    padding: 0;
+                }}
+                .container {{
+                    width: 90%;
+                    max-width: 1200px;
+                    margin: 0 auto;
+                    padding: 40px 20px;
+                }}
+                h1, h2, h3 {{
+                    color: #495057;
+                }}
+                h1 {{
+                    font-size: 2.5em;
+                    margin-bottom: 0.5em;
+                }}
+                h2 {{
+                    font-size: 1.8em;
+                    margin-bottom: 0.5em;
+                    border-bottom: 2px solid #ced4da;
+                    padding-bottom: 0.2em;
+                }}
+                h3 {{
+                    font-size: 1.5em;
+                    margin-top: 1.5em;
+                }}
+                p {{
+                    font-size: 1.2em;
                     line-height: 1.6;
-                    color: #333;
-                }}
-                h1, h2 {{
-                    color: #2c3e50;
-                }}
-                pre {{
-                    background-color: #f4f4f4;
-                    padding: 15px;
-                    border-radius: 5px;
-                    overflow-x: auto;
                 }}
                 a {{
-                    color: #3498db;
+                    color: #007bff;
                     text-decoration: none;
                 }}
                 a:hover {{
                     text-decoration: underline;
                 }}
+                pre {{
+                    background-color: #e9ecef;
+                    padding: 15px;
+                    border-radius: 8px;
+                    overflow-x: auto;
+                    font-size: 1em;
+                }}
+                code {{
+                    font-family: 'Courier New', Courier, monospace;
+                    font-size: 0.95em;
+                }}
+                .curl-example {{
+                    margin-bottom: 20px;
+                }}
+                .header {{
+                    background-color: #343a40;
+                    color: #fff;
+                    padding: 20px 0;
+                    text-align: center;
+                }}
+                .header h1 {{
+                    margin: 0;
+                    font-size: 3em;
+                }}
+                .footer {{
+                    text-align: center;
+                    padding: 20px 0;
+                    margin-top: 40px;
+                    background-color: #343a40;
+                    color: #fff;
+                }}
             </style>
         </head>
         <body>
-            <h1>Welcome to FiCast-TTS!</h1>
-            <p>Explore the full self-generated API documentation at <a href="/docs">/docs</a>.</p>
-            <h2>How to Use the FiCast-TTS API</h2>
-            {generate_curl_example(
-                "Create a Script",
-                '''curl -X POST "http://127.0.0.1:42110/podcast/create" \\
+            <div class="header">
+                <h1>FiCast-TTS</h1>
+                <p>Your gateway to text-to-speech podcast generation</p>
+            </div>
+            <div class="container">
+                <h2>Explore the API Documentation</h2>
+                <p>Visit the full self-generated API documentation at <a href="/docs">/docs</a>.</p>
+                <h2>How to Use the FiCast-TTS API</h2>
+    """
+
+    # Appending the curl examples as individual string concatenations
+    html_content += generate_curl_example(
+                    "Create a Script",
+                    '''curl -X POST "http://127.0.0.1:42110/podcast/create" \\
     -H "Content-Type: application/json" \\
     -H "Authorization: Bearer $ACCESS_TOKEN" \\
     -d '{
@@ -62,29 +126,40 @@ def generate_homepage_html() -> str:
         }}
     ]
     }}' '''
-            )}
-            <p>Save the response <code>task_id</code> as <code>$TASK_ID</code> for the next steps.</p>
-            {generate_curl_example(
-                "Retrieve Script Result",
-                '''curl -X GET "http://127.0.0.1:42110/podcast/$TASK_ID/script" \\
+                )
+
+    html_content += """
+                <p>Save the response <code>task_id</code> as <code>$TASK_ID</code> for the next steps.</p>
+    """
+    html_content += generate_curl_example(
+                    "Retrieve Script Result",
+                    '''curl -X GET "http://127.0.0.1:42110/podcast/$TASK_ID/script" \\
     -H "Content-Type: application/json" \\
     -H "Authorization: Bearer ${ACCESS_TOKEN}" '''
-            )}
-            {generate_curl_example(
-                "Generate Audio from Script",
-                '''response=$(curl -X POST "http://127.0.0.1:42110/podcast/$TASK_ID/audio" \\
+                )
+
+    html_content += generate_curl_example(
+                    "Generate Audio from Script",
+                    '''response=$(curl -X POST "http://127.0.0.1:42110/podcast/$TASK_ID/audio" \\
     -H "Content-Type: application/json" \\
-    -H "Authorization: Bearer ${ACCESS_TOKEN}") \n
+    -H "Authorization: Bearer ${ACCESS_TOKEN}") <br>
     echo $response'''
-            )}
-            {generate_curl_example(
-                "Retrieve Generated Audio",
-                '''response=$(curl -X GET "http://127.0.0.1:42110/podcast/$TASK_ID/audio" \\
+                )
+
+    html_content += generate_curl_example(
+                    "Retrieve Generated Audio",
+                    '''response=$(curl -X GET "http://127.0.0.1:42110/podcast/$TASK_ID/audio" \\
     -H "Content-Type: application/json" \\
     -H "Authorization: Bearer ${ACCESS_TOKEN}" \\
-    -o data/curl-task-result.wav) \n
+    -o data/curl-task-result.wav) <br>
     echo data/curl-task-result.wav'''
-            )}
+                )
+
+    html_content += """
+            </div>
+            <div class="footer">
+                <p>&copy; 2024 FiCast-TTS. All rights reserved.</p>
+            </div>
         </body>
     </html>
     """

@@ -11,12 +11,18 @@ from ficast.dialogue.speech import DialogueSynthesis
 
 from ..logger import logger
 from ..models.db import PodcastTask
-from ..models.session import SessionLocal, get_db
+from ..models.session import ScopedSession, get_db
 from ..models.task_status import TaskStatus
 
-USE_CELERY = os.getenv("USE_CELERY", "false").lower() == "true"
+USE_CELERY = os.getenv("USE_CELERY", "false").lower() in ("true", "1")
 if not USE_CELERY:
     import threading
+    lock = threading.Lock()
+
+else:
+    # Optional: Create Celery app if needed
+    from .celery import create_celery
+    celery_app = create_celery()
 
 class Task:
     def __init__(self, db: Session, task_id: str = None):
@@ -24,9 +30,10 @@ class Task:
         if not task_id:
             self.task_id = str(uuid.uuid4())
         else:
-            logger.info(f"Reusing Task ID: {task_id}")
             self.task_id = task_id
-        logger.info(f"Assigned Task ID: {self.task_id}")
+        self.thread = None
+        with lock:
+            logger.info(f"Task ID: {self.task_id}")
 
     def create_podcast(self, podcast_request: PodcastRequest):
         try:
@@ -57,40 +64,48 @@ class Task:
             }
 
         except Exception as e:
-            logger.error(f"Failed to create podcast task: {e}")
+            with lock:
+                logger.error(f"Failed to create podcast task: {e}")
             self.db.rollback()
-            raise HTTPException(status_code=500, detail="Failed to create podcast task")
+            raise HTTPException(status_code=500, detail=f"Failed to create podcast task:{str(e)}")
 
     def generate_audio(self):
         try:
-            # Use a fresh session to ensure that the PodcastTask object is not detached
-            with SessionLocal() as session:
-                podcast_task = session.query(PodcastTask).filter(PodcastTask.task_id == self.task_id).first()
+            # Check that script is already generated
+            podcast_task = self.db.query(PodcastTask).filter(PodcastTask.task_id == self.task_id).first()
+            if not podcast_task:
+                raise ValueError("Podcast task not found")
 
-                if not podcast_task:
-                    raise ValueError("Podcast task not found")
+            if podcast_task.script_status != TaskStatus.SUCCESS or not podcast_task.script:
+                raise ValueError("Script must be successfully generated before audio can be created")
 
-                if podcast_task.script_status != TaskStatus.SUCCESS or not podcast_task.script:
-                    raise ValueError("Script must be successfully generated before audio can be created")
+            if USE_CELERY:
+                # Enqueue Celery task
+                generate_audio_task.apply_async(
+                    args=[self.task_id])
+            else:
+                # Start non-blocking async task in a separate thread
+                self.thread = threading.Thread(
+                    target=self._execute_generate_audio_task,
+                    daemon=True
+                )
+                self.thread.start()
 
-                if USE_CELERY:
-                    # Enqueue Celery task
-                    generate_audio_task.apply_async(args=[self.task_id])
-                else:
-                    # Enqueue non-blocking async task
-                    self._enqueue_generate_audio_task()
-
-                session.commit()  # Ensure any changes are persisted
             return {
                 "task_id": self.task_id, "status": TaskStatus.PENDING
             }
+
         except Exception as e:
-            logger.error(f"Failed to enqueue audio task: {e}")
-            raise HTTPException(status_code=500, detail=f"Failed to enqueue audio task: {e}")
+            with lock:
+                logger.error(f"Failed to enqueue audio task: {e}")
+            raise HTTPException(status_code=500, detail="Failed to enqueue audio task")
 
     def _execute_create_podcast_task(self, podcast_request):
+        # Each thread must use its own session
+        local_session = ScopedSession()
         try:
-            self._update_task_status(self.task_id, TaskStatus.STARTED)
+            self._update_task_status(
+                self.task_id, TaskStatus.STARTED, session=local_session)
 
             # Create the Podcast object
             my_podcast = FiCastPodcast(
@@ -109,98 +124,79 @@ class Task:
                 my_podcast.add([podcaster])
 
             # Generate script
-            my_podcast.create()
-            script = my_podcast.json_script
-            chat_history = my_podcast.raw_script
-
+            chat_history = my_podcast.create()
+            
             # Update the task in the database
-            podcast_task = self.db.query(PodcastTask).filter(PodcastTask.task_id == self.task_id).first()
+            podcast_task = local_session.query(PodcastTask).filter(PodcastTask.task_id == self.task_id).first()
             if not podcast_task:
                 raise ValueError("Podcast task not found")
-            podcast_task.script = script
+            podcast_task.script = my_podcast.json_script
             podcast_task.script_status = TaskStatus.SUCCESS
             podcast_task.chat_history = chat_history
-            self.db.commit()
+            local_session.commit()
 
         except Exception as e:
-            logger.error(f"Failed to create podcast: {e}")
-            self.db.rollback()
-            self._update_task_status(self.task_id, TaskStatus.FAILURE)
+            with lock:
+                logger.error(f"Failed to create podcast: {e}")
+            local_session.rollback()
+            self._update_task_status(
+                self.task_id, TaskStatus.FAILURE, session=local_session)
         finally:
-            # Ensure thread cleanup
-            if self.thread:
-                self.thread.join()
-                self.thread = None
-
-
-    def _enqueue_generate_audio_task(self):
-        # Simulate non-blocking task execution
-        task_thread = threading.Thread(
-            target=self._execute_generate_audio_task)
-        task_thread.start()
-
+            ScopedSession.remove()  # Remove the session
+                
     def _execute_generate_audio_task(self):
-        logger.info(f"Executing audio generation for task ID: {self.task_id}")
+        # Each thread must use its own session
+        local_session = ScopedSession()
 
         try:
-            # Re-fetch the podcast task using a fresh session to avoid detached objects
-            with SessionLocal() as session:
-                podcast_task = session.query(PodcastTask).filter(PodcastTask.task_id == self.task_id).first()
+            self._update_task_status(self.task_id, TaskStatus.STARTED, is_audio=True, session=local_session)
 
-                if not podcast_task:
-                    logger.error(f"Podcast task {self.task_id} not found during audio generation.")
-                    raise ValueError("Podcast task not found")
+            podcast_task = local_session.query(PodcastTask).filter(PodcastTask.task_id == self.task_id).first()
+            if not podcast_task:
+                raise ValueError("Podcast task not found")
 
-                self._update_task_status(session, TaskStatus.STARTED, is_audio=True)
+            # Reconstruct the podcast object from the chat history
+            my_podcast = FiCastPodcast.from_chat_history(podcast_task.chat_history)
 
-                # Reconstruct the podcast object from the chat history
-                logger.info(f"Reconstructing podcast object for task ID: {self.task_id}")
-                my_podcast = FiCastPodcast.from_chat_history(podcast_task.chat_history)
+            # Synthesize dialogue to create audio
+            dialoguer = DialogueSynthesis(
+                client_type="api",
+                base_url=os.getenv("TTS_API_BASE_URL"),
+                api_key=os.getenv("TTS_API_KEY")
+            )
+            ficast = FiCast(conversation=my_podcast, dialogue_synthesizer=dialoguer)
+            my_audio = ficast.to_podcast(ignore_errors=True)
 
-                # Synthesize dialogue to create audio
-                dialoguer = DialogueSynthesis(
-                    client_type="api",
-                    base_url=os.getenv("TTS_API_BASE_URL"),
-                    api_key=os.getenv("TTS_API_KEY")
-                )
-
-                ficast = FiCast(
-                    conversation=my_podcast, dialogue_synthesizer=dialoguer)
-                my_audio = ficast.to_podcast(ignore_errors=True)
-                # Update the task with the new audio and mark audio task as SUCCESS
-                podcast_task.audio = my_audio
-                podcast_task.audio_status = TaskStatus.SUCCESS
-                session.commit()
-
-                logger.info(f"Audio generation completed for task ID: {self.task_id}")
+            # Update the task with the new audio and mark audio task as SUCCESS
+            podcast_task.audio = my_audio
+            podcast_task.audio_status = TaskStatus.SUCCESS
+            local_session.commit()
 
         except Exception as e:
-            logger.error(f"Failed to generate audio for task ID: {self.task_id}: {e}")
-            with SessionLocal() as session:
-                self._update_task_status(
-                    session, TaskStatus.FAILURE, is_audio=True)
-            raise
+            with lock:
+                logger.error(f"Failed to generate audio: {e}")
+            local_session.rollback()
+            self._update_task_status(self.task_id, TaskStatus.FAILURE, is_audio=True, session=local_session)
+        finally:
+            ScopedSession.remove()  # Remove the session
 
-    def _update_task_status(
-        self, session: Session, status: TaskStatus, is_audio: bool = False
-        ):
+    def _update_task_status(self, task_id: str, status: TaskStatus, is_audio: bool = False, session: Session = None):
+        if session is None:
+            session = self.db
         try:
-            task: PodcastTask = session.query(PodcastTask).filter(PodcastTask.task_id == self.task_id).first()
+            task = session.query(PodcastTask).filter(PodcastTask.task_id == task_id).first()
             if not task:
-                logger.error(f"Task {self.task_id} not found when trying to update status.")
                 raise ValueError("Task not found")
 
             if is_audio:
                 task.audio_status = status
             else:
                 task.script_status = status
-
             session.commit()
-            logger.info(f"Task ID {self.task_id} status updated to {status}")
-
         except Exception as e:
+            with lock:
+                logger.error(f"Failed to update task status: {e}")
             session.rollback()
-            logger.error(f"Failed to update task status for task ID {self.task_id}: {e}")
             raise
         
 

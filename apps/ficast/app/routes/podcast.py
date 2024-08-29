@@ -92,4 +92,5 @@ async def get_podcast_audio(task_id: str, db: Session = Depends(get_db), user=De
     if not podcast_task.audio:
         raise HTTPException(status_code=404, detail="Audio not found")
 
-    return Response(content=podcast_task.audio, media_type="audio/wav")
+    return Response(
+        content=podcast_task.audio, media_type="audio/wav")
