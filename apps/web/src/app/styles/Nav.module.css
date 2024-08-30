@@ -1,0 +1,47 @@
+.navbar {
+  margin-top: 0.5rem;
+  background-color: #1e1e2e;
+  color: #ffffff;
+  font-family: 'Orbitron', sans-serif;
+}
+
+.navbar-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.brand-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #00ccff;
+  transition: color 0.3s ease;
+}
+
+.brand-wordmark {
+  font-size: 0.875rem;
+  color: #a0aec0;
+  margin-left: 1rem;
+  font-style: italic;
+}
+
+.brand-name:hover {
+  color: #ff00ff;
+}
+
+.button-primary {
+  background-color: #00ccff;
+  border: none;
+  color: #ffffff;
+  font-family: 'Orbitron', sans-serif;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.button-primary:hover {
+  background-color: #ff00ff;
+  transform: scale(1.1);
+}

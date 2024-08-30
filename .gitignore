@@ -1,3 +1,6 @@
+# firebase
+gpt-microservices-firebase-adminsdk-nfelm-c5e2e0d182.json
+
 ## dockr Data
 data/
 
@@ -140,6 +143,7 @@ celerybeat.pid
 
 # Environments
 .env
+.env.local
 .venv
 env/
 venv/

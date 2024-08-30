@@ -1,21 +1,22 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
-import { useSession, signIn, signOut } from "next-auth/react";
+
+import React, { useState, useRef } from "react";
+import { useSession, signOut } from "next-auth/react";
 import {
   Avatar,
-  Button,
   Navbar,
   NavbarContent,
   NavbarItem,
   NavbarMenuToggle,
 } from "@nextui-org/react";
 import NextLink from "next/link";
+import styles from "./styles/Nav.module.css";
 
 export default function Nav() {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleSignOut = () => {
     signOut();
@@ -30,32 +31,22 @@ export default function Nav() {
     setIsDropdownOpen(false);
   };
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [dropdownRef]);
-
   return (
     <Navbar
       onMenuOpenChange={setIsMenuOpen}
-      className="mt-2 bg-gray-800 text-white"
+      className={`${styles.navbar}`}
     >
-      <NavbarContent>
+      <NavbarContent className={styles["navbar-content"]}>
         <NavbarMenuToggle
           aria-label={isMenuOpen ? "Close menu" : "Open menu"}
           className="sm:hidden"
         />
         <NextLink href="/" passHref onClick={handleHomeClick}>
-          FiCast-GPT
+          <span className={styles["brand-name"]}>FiCast</span>
         </NextLink>
+        <p className={styles["brand-wordmark"]}>
+          Knowledgeable Music in Your Ears
+        </p>
       </NavbarContent>
 
       <NavbarContent justify="end">
@@ -63,12 +54,11 @@ export default function Nav() {
           <div className="container mx-auto p-4">
             {!session && (
               <div className="flex flex-col items-center justify-center">
-                <Button
-                  className="btn btn-primary btn-sm"
-                  onClick={() => signIn()}
-                >
-                  Sign in
-                </Button>
+                <NextLink href="/login" passHref>
+                  <button className={styles["button-primary"]}>
+                    Sign in
+                  </button>
+                </NextLink>
               </div>
             )}
             {session && (
@@ -78,9 +68,9 @@ export default function Nav() {
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 >
                   <Avatar
-                    src={session.user.image}
-                    alt={session.user.name}
-                    className="rounded-full w-10 h-10" // Tailwind CSS classes for size
+                    src={session.user.image ?? '/default-avatar.png'}
+                    alt={session.user.name ?? 'User Avatar'}
+                    className="rounded-full w-10 h-10"
                   />
                 </button>
                 {isDropdownOpen && (

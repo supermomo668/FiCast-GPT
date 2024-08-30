@@ -11,10 +11,10 @@ export default function ProvidersWrapper({
 }) {
   return (
     <SessionProvider>
-      <NextThemesProvider defaultTheme="system" attribute="class">
-        {/* {children} */}
-        <NextUIProvider>{children}</NextUIProvider>
-      </NextThemesProvider>
+      {/* <NextThemesProvider defaultTheme="system" attribute="class"> */}
+        {/* <NextUIProvider>{children}</NextUIProvider> */}
+        {children}
+      {/* </NextThemesProvider> */}
     </SessionProvider>
   );
 }

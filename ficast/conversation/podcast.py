@@ -11,11 +11,10 @@ from thought_agents.ontology.config.dialogue import ConversationConfig, PodcastC
  
 from .base import Conversation
 from ficast.character.podcast import Character, Podcaster
-
+from ficast.config import load_podcast_config
 from thought_agents.dialogue.agents import agent_registry
 
 from thought_agents.dialogue.transition import get_state_transition
-from .config import conv_cfg
 from .utils import extract_json_code_block, save_json_based_script, save_raw_based_script
 
 
@@ -24,8 +23,7 @@ class Podcast(Conversation):
   topic: str
   output_format: str = "json"
   participants: List[Podcaster] = []
-  cfg: ConversationConfig = conv_cfg
-  podcast_cfg: PodcastConfig = conv_cfg.podcast_config
+  cfg: ConversationConfig = load_podcast_config()
   conv_mode: str = "podcast"
   class Config:
     arbitrary_types_allowed = True
@@ -37,14 +35,16 @@ class Podcast(Conversation):
     n_rounds: int =None, 
     ):
     
-    super().__init__(topic=topic, participants=participants, n_rounds=n_rounds, output_format=self.output_format)
-    # self.config = conv_cfg  # Assuming conv_cfg is defined elsewhere
+    super().__init__(
+      topic=topic, participants=participants, n_rounds=n_rounds, output_format=self.output_format
+    )
+    # self.cfg = load_podcast_config()  # Assuming conv_cfg is defined elsewhere
     self.initializer = autogen.UserProxyAgent(
       name="init", 
       code_execution_config=False,
     )
-    self.podcast_cfg.n_rounds = n_rounds
-    self.podcast_cfg.topic = topic
+    self.cfg.podcast_config.n_rounds = n_rounds
+    self.cfg.podcast_config.topic = topic
     
   @property
   def agent_chain(self) -> List[autogen.Agent]:
@@ -55,7 +55,8 @@ class Podcast(Conversation):
       self.cfg.llm_config, self.cfg.system_prompts)
     # create podcast agents:  podcast_host, podcast_guests
     agents = [self.initializer]
-    for a in [research_agents, self.host_agents, self.guest_agents, script_parser]:
+    for a in [
+      research_agents, self.host_agents, self.guest_agents, script_parser]:
       agents.extend(a)
     return agents
   
@@ -84,20 +85,21 @@ class Podcast(Conversation):
       raise ValueError("Podcast requires at least 1 guest.")
   
   def _set_character_cfg(self):
-    self.podcast_cfg.character_cfg.hosts = self.hosts
-    self.podcast_cfg.character_cfg.guests = self.guests
+    self.cfg.podcast_config.character_cfg.hosts = self.hosts
+    self.cfg.podcast_config.character_cfg.guests = self.guests
     
   def _create_conv_group(self):
     self._validate_participants()
     self._set_character_cfg()
+    podcast_cfg = self.cfg.podcast_config
     groupchat = autogen.GroupChat(
         agents=self.agent_chain,
         messages=[],
-        max_round=self.podcast_cfg.n_rounds,
+        max_round=podcast_cfg.n_rounds,
         speaker_selection_method=get_state_transition(
-          self.podcast_cfg, 
+          podcast_cfg, 
           transition=f"podcast.default", 
-          MAX_ROUND=self.podcast_cfg.n_rounds
+          MAX_ROUND=podcast_cfg.n_rounds
         ),
     )
     self.groupchat_manager = autogen.GroupChatManager(
@@ -105,44 +107,54 @@ class Podcast(Conversation):
         llm_config=self.cfg.llm_config.model_dump()
     )
   
+  def get_script(
+    self, mode='json', create_if_not:bool = True
+    ):
+    if not hasattr(self, 'chat_history'):
+      if create_if_not:
+        self.create()
+      else:
+        raise ValueError("Podcast conversation has not been created yet. Use `.create()` to create the conversation.")
+    match mode:
+      case 'json':
+        self.script = self.json_script
+      case 'raw': 
+        self.script = self.raw_script
+      case 'raw-json':
+        self.script = []
+        for c in self.raw_script:
+          try:
+            self.script.append(extract_json_code_block(c['content']))
+          except Exception as e:
+            warnings.warn(f"Error parsing script: {e}, returning correct but likely incomplete script.")
+      case _:
+        raise ValueError(f"Invalid mode: {mode}. Valid modes are: json, raw, raw-json.")
+    return self.script
+  
   @property
-  def raw_script(self) -> Dict[str, str]:
+  def raw_script(self, create_if_na:bool = True) -> Dict[str, str]:
     # return only the chat history concerning podcast agents
-    return self.chat_history[4:-1]
+    n_research_agents = len(agent_registry.get_class("dialogue.research")(
+      self.cfg.llm_config, self.cfg.system_prompts))
+    return self.chat_history[n_research_agents:-1]
     
   @property
-  def script(self) -> Dict:
-    # return only the chat history concerning podcast agents
-    json_script = []
-    for c in self.raw_script:
-      try:
-        json_script.append(extract_json_code_block(c['content']))
-      except Exception as e:
-        warnings.warn(f"Error parsing script: {e}, returning correct but likely incomplete script.")
-        return json_script
-    return json_script
-   
-  @property
   def json_script(self) -> Dict:
-    if hasattr(self, 'chat_history'):
-      # return the script in json dictionary from `script_parser` agent
-      if 'content' in self.chat_history[-1]:
+    if 'content' in self.chat_history[-1]:
         return extract_json_code_block(self.chat_history[-1]['content'])
-      else:
-        raise ValueError("Podcast conversation is not created correctly. Fix the script generation in `.create()`. The final user should be a script parser agent. Or access the `script` attribute referencecd from chat_history directly.")
     else:
-      raise ValueError("Podcast conversation has not been created yet. Use `.create()` to create the conversation.")
+      raise ValueError("key `content` not found in  `chat_history` object.")
 
-  def save_script(self, path: str = None, option: str = "json") -> None:
+  def save_script(self, save_path: str = None, option: str = "json") -> None:
     if not hasattr(self, 'chat_history'):
       raise ValueError("Podcast conversation has not been created yet. Use `.create()` to create the conversation.")
     options={"json", "human", "text", "html"}
-    if path is None:
+    if not save_path:
       output_dir = Path("ficast-outputs/scripts")
       output_dir.mkdir(parents=True, exist_ok=True)
       path = output_dir / f"script_{self.created_at}_{option}.txt"
     else:
-      path = Path(path)
+      path = Path(save_path)
     # Call the appropriate function based on the option
     if option.lower() in ["json", "human"]:
       save_json_based_script(self.json_script, path, option)
@@ -151,3 +163,16 @@ class Podcast(Conversation):
     else:
       raise ValueError(f"Unsupported option '{option}' provided. Supported options are 'json', 'text', 'html', and 'human'.")
     print(f"Script saved to {path}")
+    
+  @classmethod
+  @beartype
+  def from_chat_history(cls, chat_history: List[Dict]):
+    """
+    Class method to create a Podcast instance from a given chat history.
+    """
+    # Initialize an instance with default or dummy arguments
+    instance = cls(
+      topic="", participants=[], n_rounds=0)
+    # Set the chat history
+    instance.chat_history = chat_history
+    return instance

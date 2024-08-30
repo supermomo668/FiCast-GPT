@@ -1,10 +1,10 @@
 import re
 from typing import Optional, List
-from pydantic import BaseModel
 
 from thought_agents.ontology.config.dialogue import Person, AutogenLLMConfig, ConversationConfig
 
-from .config import default_cfg   # same as podcast config
+from ..config import load_podcast_config   
+# same as podcast config
 
 def match_string_against_list(s: str, allowed_list: List[str]) -> bool:
     """
@@ -46,7 +46,7 @@ class Character(Person):
     introduce()
         Returns an introduction string for the podcaster.
     """
-    cfg: ConversationConfig = default_cfg
+    cfg: ConversationConfig = load_podcast_config()
     system_message: str = "As yourself: {name}, respond to the conversation."
     name: str
     role: str
@@ -64,8 +64,10 @@ class Character(Person):
         gender: str = None,
         system_message: str = "As yourself: {name}, respond to the conversation.",
         ):
-        super().__init__(name=name, description=description, role=role, model=model)
-        self.cfg.llm_config = AutogenLLMConfig(**{"filter_dict": {"model": [model]}})
+        super().__init__(
+            name=name, description=description, role=role, model=model
+        )
+        self.cfg = load_podcast_config()
         self.system_message = system_message.format_map({"name": name})
         assert match_string_against_list(role, self.__allowed_roles__()), "Invalid role, must be one of {}".format(self.__allowed_roles__)
         

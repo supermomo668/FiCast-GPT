@@ -1,7 +1,7 @@
 from functools import lru_cache
 import random
-from typing import Any, Dict, List, Generator, Union
-from collections.abc import AsyncGenerator
+from beartype import typing
+from collections.abc import Generator
 import warnings
 from beartype import beartype
 import dotenv
@@ -16,7 +16,7 @@ dotenv.load_dotenv()
 class TextToSpeech:
   voice_wildcards = ["random", "any"]
 
-  def __init__(self, client_type: str, **kwargs: Any):
+  def __init__(self, client_type: str, **kwargs: typing.Any):
     """
     Initializes the TextToSpeech object.
 
@@ -35,7 +35,7 @@ class TextToSpeech:
   
   @property
   @lru_cache(maxsize=None)
-  def all_voices_by_id(self) -> Dict[str, Union[Voice, str, Any]]:
+  def all_voices_by_id(self) -> dict[str, Voice | str]:
     return self.client.all_voices_by_id
   
   def get_random_voices(self):
@@ -46,7 +46,7 @@ class TextToSpeech:
   def get_random_voice(self):
     return self.get_random_voices()[0]
   
-  def get_voice(self, voice_id:str) -> Union[Voice, str]:
+  def get_voice(self, voice_id:str) -> Voice | str:
     """
     Retrieves a voice from the list of available voices based on the provided voice ID.
     Args:
@@ -76,7 +76,7 @@ class TextToSpeech:
     voice_id: str = None, 
     voice_name: str = "random", 
     **kwargs
-  ) -> Generator[bytearray, None, None] | AsyncGenerator[bytearray, None, None]:
+  ) -> Generator[bytearray, None, None] | typing.AsyncGenerator[bytearray, None]:
       
     # Check if both voice_id and voice_name are provided
     if voice_id and voice_name:
