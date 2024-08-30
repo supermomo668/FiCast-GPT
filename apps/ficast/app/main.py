@@ -4,7 +4,7 @@ import dotenv
 
 dotenv.load_dotenv(".env", override=True)
 
-from .routes import podcast, auth, basic
+from .routes import podcast, auth, basic, samples
 from .models.session import init_db
 
 app = FastAPI()
@@ -15,8 +15,9 @@ async def lifespan(app: FastAPI):
     init_db()
     yield
     # Cleanup resources if needed
-    
+
 app.include_router(auth.router)
+app.include_router(samples.router)
 app.include_router(basic.router)
 app.include_router(podcast.router)
 
