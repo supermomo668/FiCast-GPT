@@ -106,7 +106,7 @@ def generate_homepage_html() -> str:
     # Appending the curl examples as individual string concatenations
     html_content += generate_curl_example(
                     "Create a Script",
-                    '''curl -X POST "http://127.0.0.1:42110/podcast/create" \\
+                    '''curl -X POST "<this_url>/podcast/create" \\
     -H "Content-Type: application/json" \\
     -H "Authorization: Bearer $ACCESS_TOKEN" \\
     -d '{
@@ -133,14 +133,14 @@ def generate_homepage_html() -> str:
     """
     html_content += generate_curl_example(
                     "Retrieve Script Result",
-                    '''curl -X GET "http://127.0.0.1:42110/podcast/$TASK_ID/script" \\
+                    '''curl -X GET "<this_url>/podcast/$TASK_ID/script" \\
     -H "Content-Type: application/json" \\
     -H "Authorization: Bearer ${ACCESS_TOKEN}" '''
                 )
 
     html_content += generate_curl_example(
                     "Generate Audio from Script",
-                    '''response=$(curl -X POST "http://127.0.0.1:42110/podcast/$TASK_ID/audio" \\
+                    '''response=$(curl -X POST "<this_url>/podcast/$TASK_ID/audio" \\
     -H "Content-Type: application/json" \\
     -H "Authorization: Bearer ${ACCESS_TOKEN}") <br>
     echo $response'''
@@ -148,7 +148,7 @@ def generate_homepage_html() -> str:
 
     html_content += generate_curl_example(
                     "Retrieve Generated Audio",
-                    '''response=$(curl -X GET "http://127.0.0.1:42110/podcast/$TASK_ID/audio" \\
+                    '''response=$(curl -X GET "<this_url>/podcast/$TASK_ID/audio" \\
     -H "Content-Type: application/json" \\
     -H "Authorization: Bearer ${ACCESS_TOKEN}" \\
     -o data/curl-task-result.wav) <br>

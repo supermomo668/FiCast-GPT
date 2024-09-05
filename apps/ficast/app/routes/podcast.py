@@ -10,7 +10,7 @@ from ..models.session import get_db
 from ..tasks.task import Task
 from ..models.request import PodcastRequest
 from ..models.response import TaskCreate, TaskStatusResponse
-from ..utils import get_current_user
+from ..services.auth import get_current_user
 
 router = APIRouter(
     prefix="/podcast",

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from ..models.request import Token
-from ..utils import get_current_user, authenticate_user, create_access_token
+from ..services.auth import get_current_user, authenticate_user, create_access_token
 
 router = APIRouter(
     prefix="/auth",
@@ -21,9 +21,19 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
         data={"sub": user["username"]})
     return {"access_token": access_token, "token_type": "bearer"}
 
-@router.get("/verify-token", response_class=JSONResponse)
-async def verify_token(user=Depends(get_current_user)):
+@router.get("/check", response_class=JSONResponse)
+async def test_auth(user=Depends(get_current_user)):
     return JSONResponse(
-        content={
-            "status": "success", "user": user["user"]}
-    )
+        status_code=200, content={"auth": "firebase", "user": user["user"]})
+
+@router.post('/issue-api-token', response_class=JSONResponse)
+async def issue_api_token(user=Depends(get_current_user)):
+    access_token = create_access_token(data={"sub": user["user"]})
+    return JSONResponse(
+        status_code=200, content={"api_token": access_token})
+
+@router.get("/test-api-token", response_class=JSONResponse)
+async def test_api_token(user=Depends(get_current_user)):
+    return JSONResponse(
+        status_code=200, content={"auth": "api_key", "user": user["user"]})
+

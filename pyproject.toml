@@ -30,6 +30,8 @@ celery = "^5.4.0"
 redis = "^5.0.8"
 sqlalchemy = "^2.0.32"
 pyjwt = "^2.9.0"
+firebase-admin = "^6.5.0"
+itsdangerous = "^2.2.0"
 
 [build-system]
 requires = ["poetry-core"]

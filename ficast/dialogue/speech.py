@@ -77,7 +77,6 @@ class TextToSpeech:
     voice_name: str = "random", 
     **kwargs
   ) -> Generator[bytearray, None, None] | typing.AsyncGenerator[bytearray, None]:
-      
     # Check if both voice_id and voice_name are provided
     if voice_id and voice_name:
       warnings.warn("Both `voice_id` and `voice_name` are provided. Defaulting to `voice_id`.")
