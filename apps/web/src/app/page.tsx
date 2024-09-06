@@ -1,21 +1,22 @@
 // src/app/(home)/page.tsx
 "use client";
 
-import { Landing } from "@/app/components/landing";
-import { Podcast } from "@/app/components/podcast";
+import { Landing } from "@/app/(components)/landing";
+import { Podcast } from "@/app/(components)/podcast";
 import Image from "next/image";
 import { useState } from "react";
-import { getPodcast } from "../actions";
+import { getPodcast } from "@/app/actions";
 
 interface PodcastData {
   topic: string;
   speakers: string[];
 }
 
+
 export default function Home() {
   const [data, setData] = useState<PodcastData | null>(null);
   const [podcastContent, setPodcast] = useState<any>(null);
-  const [useOpenai, setOpenai] = useState(true);
+  // const [useOpenai, setOpenai] = useState(true);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between  p-24 text-white bg-gradient-to-b bg-slate-900 from-slate-900 to-purple-900/30">
@@ -39,7 +40,7 @@ export default function Home() {
             const podcastUi = await getPodcast(
               data.topic,
               data.speakers as [string, ...string[]],  // Type assertion to enforce tuple type
-              useOpenai
+              // useOpenai
             );
             setPodcast(podcastUi);
             setData(data);

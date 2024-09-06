@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import "./globals.css";
-import ProvidersWrapper from "./ProvidersWrapper";
+import "@/styles/globals.css";
+import ProvidersWrapper from "@/app/(providers)/ProvidersWrapper";
 import dynamic from "next/dynamic";
 
 // Dynamically import Nav component with ssr: false
-const Nav = dynamic(() => import("./Nav"), { ssr: false });
+const Nav = dynamic(() => import("@/app/(providers)/Nav"), { ssr: false });
 
 const inter = Inter({ subsets: ["latin"] });
 

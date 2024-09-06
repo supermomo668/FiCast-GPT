@@ -1,13 +1,13 @@
 "use server";
 
-import { Message } from "@/app/components/Message";
-import { SAMPLE_MESSAGES } from "@/app/components/podcast";
+import { Message } from "@/app/(components)/Message";
+import { SAMPLE_MESSAGES } from "@/app/(components)/podcast";
 import { createStreamableUI } from "ai/rsc";
 
 import { generateObject, streamObject } from "ai";
 import { z } from "zod";
 import { openai } from "@ai-sdk/openai";
-import { CharacterImages } from "@/app/components/CHARACTERS";
+import { CharacterImages } from "@/app/(components)/CHARACTERS";
 
 import { Pinecone } from "@pinecone-database/pinecone";
 import OpenAI from "openai";
@@ -141,14 +141,14 @@ Generate a dialog of 40 messages between the following parties ${speakers.join(
 export async function getPodcast(
   topic: string,
   speakers: [string, ...string[]],
-  useOpenai: boolean
+  // useOpenai: boolean
 ): Promise<JSX.Element> {
   const weatherUI = createStreamableUI();
 
   weatherUI.update(<>...</>);
 
-  const getMessages = useOpenai ? getMessagesOpenAI : getMessagesNewBackend;
-  
+  // const getMessages = useOpenai ? getMessagesOpenAI : getMessagesNewBackend;
+  const getMessages = getMessagesNewBackend;
   getMessages(speakers, topic, (messages) => {
     if (Array.isArray(messages))
       weatherUI.update(

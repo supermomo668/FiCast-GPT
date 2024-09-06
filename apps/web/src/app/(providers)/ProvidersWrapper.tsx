@@ -2,7 +2,7 @@
 import { SessionProvider } from "next-auth/react";
 import { NextUIProvider } from "@nextui-org/react";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
-import "../app/globals.css";
+import "@/styles/globals.css";
 
 export default function ProvidersWrapper({
   children,
@@ -18,11 +18,6 @@ export default function ProvidersWrapper({
     </SessionProvider>
   );
 }
-
-// "use client";
-// import { NextUIProvider } from "@nextui-org/react";
-// import { SessionProvider } from "next-auth/react";
-// import { ThemeProvider as NextThemesProvider } from "next-themes";
 
 // export default function ProvidersWrapper({
 //   children,

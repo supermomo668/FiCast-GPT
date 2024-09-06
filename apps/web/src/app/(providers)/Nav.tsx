@@ -10,7 +10,7 @@ import {
   NavbarMenuToggle,
 } from "@nextui-org/react";
 import NextLink from "next/link";
-import styles from "./styles/Nav.module.css";
+import styles from "@/styles/Nav.module.css";
 
 export default function Nav() {
   const { data: session } = useSession();
