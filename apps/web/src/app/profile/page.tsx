@@ -1,6 +1,7 @@
-// src/pages/profile.tsx
+"use client";
+
 import { useAuth } from '@/hooks/useAuth';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 
@@ -17,12 +18,11 @@ const Profile = () => {
   useEffect(() => {
     if (!loading && !user) {
       setUnauthorized(true);
-      console.log('User not authenticated, redirecting to login...'); // Log before redirection
-      router.push('/login'); // Redirect to login if not authenticated
+      router.push('/login');
     }
   }, [loading, user, router]);
 
-  const issueApiKey = async () => {
+  const generateApiKey = async () => {
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_AUTH_URL}/issue-api-token`,
@@ -41,79 +41,117 @@ const Profile = () => {
 
   const testApiKeyRequest = async () => {
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_AUTH_URL}/test-api-token`, {
-        headers: {
-          Authorization: `Bearer ${testApiKey}`,
-        },
-      });
-      setTestResponse(JSON.stringify(response.data, null, 2)); // Prettify the JSON response
-      setShowModal(true); // Show the modal with the response
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_AUTH_URL}/test-api-token`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${testApiKey}`,
+          },
+        }
+      );
+      setTestResponse(JSON.stringify(response.data, null, 2));
+      setShowModal(true);
     } catch (error) {
       setTestResponse('Invalid API Key or request failed');
-      setShowModal(true); // Show the modal even if there's an error
+      setShowModal(true);
+    }
+  };
+
+  const copyToClipboard = () => {
+    if (apiKey) {
+      navigator.clipboard.writeText(apiKey);
+      alert('API key copied to clipboard!');
     }
   };
 
   if (loading) {
-    return <div>Loading...</div>; // Show loading state while determining auth status
+    return (
+      <div className="flex items-center justify-center h-screen bg-background text-foreground">
+        <div className="text-lg text-foreground animate-pulse">Loading...</div>
+      </div>
+    );
   }
 
   if (unauthorized) {
-    return <div className="text-center text-red-500 mt-10">Unauthorized: Please log in to access this page.</div>;
+    return (
+      <div className="text-center text-red-500 mt-10">
+        Unauthorized: Please log in to access this page.
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto mt-10">
-      <h1 className="text-2xl mb-4">Welcome, {user?.displayName}</h1>
-      <div className="mb-4">
+    <div className="container mx-auto mt-10 p-6 bg-background text-foreground rounded-lg shadow-md">
+      <h1 className="text-3xl font-bold mb-6">Welcome, {user?.displayName}</h1>
+
+      <div className="mb-6">
         <button
-          onClick={issueApiKey}
-          className="bg-green-500 text-white px-4 py-2 rounded">
-          Issue API Key
+          onClick={generateApiKey}
+          className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-lg transition duration-300 ease-in-out"
+        >
+          Generate API Key
         </button>
         {apiKey && (
-          <div className="mt-4">
+          <div className="mt-6 p-4 border border-border rounded-lg bg-background text-foreground relative shadow-md">
             <input
               type={revealKey ? 'text' : 'password'}
               value={apiKey}
               readOnly
-              className="border p-2 w-full"
+              className="w-full p-2 rounded border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             />
-            <button onClick={() => setRevealKey(!revealKey)} className="text-blue-500 mt-2">
-              {revealKey ? 'Hide' : 'Reveal'} Key
+            <button
+              onClick={() => setRevealKey(!revealKey)}
+              className="absolute top-4 right-36 text-sm text-indigo-600 hover:underline"
+            >
+              {revealKey ? 'Hide' : 'Reveal'}
+            </button>
+            <button
+              onClick={copyToClipboard}
+              className="absolute top-4 right-4 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1 rounded-lg shadow"
+            >
+              Copy
             </button>
           </div>
         )}
       </div>
 
-      <div className="mb-4">
-        <h2 className="text-xl">Test API Key</h2>
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold mb-2">Test API Key</h2>
         <input
           type="text"
           value={testApiKey}
           onChange={(e) => setTestApiKey(e.target.value)}
           placeholder="Enter API Key"
-          className="border p-2 w-full mb-2"
+          className="w-full p-2 border border-border rounded bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent mb-4"
         />
         <button
           onClick={testApiKeyRequest}
-          className="bg-blue-500 text-white px-4 py-2 rounded">
+          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-lg transition duration-300 ease-in-out"
+        >
           Test API Key
         </button>
       </div>
 
-      <button onClick={() => signOut()} className="bg-red-500 text-white px-4 py-2 rounded">
+      <button
+        onClick={() => signOut()}
+        className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-lg transition duration-300 ease-in-out"
+      >
         Sign Out
       </button>
 
+      {/* Modal for displaying the pretty-printed JSON response */}
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded shadow-lg w-1/2 max-h-full overflow-auto">
-            <h2 className="text-xl mb-4">API Key Test Response</h2>
-            <pre className="bg-gray-100 p-4 border rounded overflow-auto">{testResponse}</pre>
+          <div className="bg-white dark:bg-background p-6 rounded shadow-lg max-w-lg w-full">
+            <h2 className="text-xl font-bold mb-4">API Key Test Response</h2>
+            <pre className="bg-gray-100 dark:bg-background p-4 border rounded overflow-auto text-sm">
+              {testResponse}
+            </pre>
             <button
               onClick={() => setShowModal(false)}
-              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded">
+              className="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-lg transition duration-300 ease-in-out"
+            >
               Close
             </button>
           </div>

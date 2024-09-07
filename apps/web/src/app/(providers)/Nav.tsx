@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { useSession, signOut } from "next-auth/react";
 import {
   Avatar,
   Navbar,
@@ -10,10 +9,11 @@ import {
   NavbarMenuToggle,
 } from "@nextui-org/react";
 import NextLink from "next/link";
+import { useAuth } from "@/hooks/useAuth"; // Firebase auth hook
 import styles from "@/styles/Nav.module.css";
 
 export default function Nav() {
-  const { data: session } = useSession();
+  const { user, signOut } = useAuth(); // Use Firebase auth
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -32,10 +32,7 @@ export default function Nav() {
   };
 
   return (
-    <Navbar
-      onMenuOpenChange={setIsMenuOpen}
-      className={`${styles.navbar}`}
-    >
+    <Navbar onMenuOpenChange={setIsMenuOpen} className={`${styles.navbar}`}>
       <NavbarContent className={styles["navbar-content"]}>
         <NavbarMenuToggle
           aria-label={isMenuOpen ? "Close menu" : "Open menu"}
@@ -52,24 +49,22 @@ export default function Nav() {
       <NavbarContent justify="end">
         <NavbarItem>
           <div className="container mx-auto p-4">
-            {!session && (
+            {!user && (
               <div className="flex flex-col items-center justify-center">
                 <NextLink href="/login" passHref>
-                  <button className={styles["button-primary"]}>
-                    Sign in
-                  </button>
+                  <button className={styles["button-primary"]}>Sign in</button>
                 </NextLink>
               </div>
             )}
-            {session && (
+            {user && (
               <div className="relative" ref={dropdownRef}>
                 <button
                   className="flex items-center space-x-2"
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 >
                   <Avatar
-                    src={session.user.image ?? '/default-avatar.png'}
-                    alt={session.user.name ?? 'User Avatar'}
+                    src={user.photoURL ?? "/default-avatar.png"}
+                    alt={user.displayName ?? "User Avatar"}
                     className="rounded-full w-10 h-10"
                   />
                 </button>

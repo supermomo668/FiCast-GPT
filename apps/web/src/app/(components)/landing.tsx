@@ -55,7 +55,7 @@ export function CharacterSelector({ onChange }) {
 }
 
 export function Landing({ onStart }) {
-  const [topic, setTopic] = useState<string>("inflation");
+  const [topic, setTopic] = useState<string>("<An interesting topic>");
   const [speakers, setSpeakers] = useState<string[]>();
 
   return (
