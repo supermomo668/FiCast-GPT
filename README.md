@@ -23,6 +23,10 @@ Tool for processing & producing musical podcasts w/ thoughtful multi-agents
   ```
   python3 -m pip install -i https://test.pypi.org/simple/ ficast-gpt
   ```
+* Installing from Test PyPI using poetry:
+  ```
+  poetry add ficast-gpt --source https://test.pypi.org/simple/
+  ```
 * Required environment / keys configuration
   1. `conf/OAI_CONFIG_LIST.txt` following the syntax of [PyAutogen](https://github.com/microsoft/autogen), the framework this package is based on to configure your LLM clients.
       * Note: Please add the followin safety settings to the model configuration to avoid safety-related filter errors during generation.
