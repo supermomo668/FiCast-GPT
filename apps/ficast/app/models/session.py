@@ -4,13 +4,15 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 
 # Load environment variables
-load_dotenv()
+load_dotenv(override=True)
 
 # Initialize the engine
 DATABASE_URL = os.getenv("DATABASE_URL")
-assert DATABASE_URL, "DATABASE_URL must be set in the environment variables."
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL must be set in the environment variables.")
 
-engine = create_engine(DATABASE_URL)
+engine = create_engine(
+    DATABASE_URL, connect_args={"check_same_thread": True}, echo=True)
 
 # Create a configured "Session" class
 SessionLocal = sessionmaker(
@@ -27,11 +29,17 @@ def get_db():
 
 def init_db():
     """Initialize the database schema by creating all tables."""
-    from .base import Base
-    from .db import PodcastTask  # Ensure all models are imported here
+    from apps.ficast.app.models.base import Base
+    from apps.ficast.app.models.db import PodcastTask  # Ensure all models are imported here
+    # Debugging print to verify model import
+    print("Model imported:", PodcastTask.__tablename__)
+    try:
+        print(f"Initializing database with URL: {DATABASE_URL}")
+        Base.metadata.create_all(bind=engine)  # Create all tables
+        print("Database initialized successfully!")
+    except Exception as e:
+        print(f"Error during table creation: {e}")
     
-    Base.metadata.create_all(bind=engine)
-
 if __name__ == "__main__":
   # Initialize the database entrypoint (manual)
   init_db()

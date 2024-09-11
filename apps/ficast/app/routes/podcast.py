@@ -1,3 +1,4 @@
+import json
 from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
@@ -19,7 +20,8 @@ router = APIRouter(
 
 @router.post("/create", response_model=TaskCreate)
 async def create_podcast(
-    request: PodcastRequest, db: Session = Depends(get_db), user=Depends(get_current_user)):
+    request: PodcastRequest, 
+    db: Session = Depends(get_db), user=Depends(get_current_user)):
     task = Task(db)
     try:
         task_msg = task.create_podcast(request)
@@ -31,15 +33,17 @@ async def create_podcast(
 
 @router.get("/{task_id}/status", response_model=TaskStatusResponse)
 async def get_podcast_status(task_id: str, db: Session = Depends(get_db), user=Depends(get_current_user)):
-    podcast_task = db.query(PodcastTask).filter(PodcastTask.task_id == task_id).first()
+    podcast_task = db.query(PodcastTask).filter(
+        PodcastTask.task_id == task_id).first()
     
     if not podcast_task:
         raise HTTPException(status_code=404, detail="Task not found")
     return TaskStatusResponse(
-        script_status=podcast_task.script_status, audio_status=podcast_task.audio_status
+        script_status=podcast_task.script_status, audio_status=podcast_task.audio_status,
+        error=podcast_task.error_message
     )
 
-@router.get("/{task_id}/script", response_class=Response)
+@router.get("/{task_id}/script", response_class=JSONResponse)
 async def get_podcast_script(task_id: str, db: Session = Depends(get_db), user=Depends(get_current_user)):
     podcast_task = db.query(PodcastTask).filter(PodcastTask.task_id == task_id).first()
 
@@ -52,7 +56,10 @@ async def get_podcast_script(task_id: str, db: Session = Depends(get_db), user=D
     if podcast_task.script_status != TaskStatus.SUCCESS:
         raise HTTPException(status_code=202, detail="Script generation in progress")
 
-    return Response(content=podcast_task.script, media_type="application/json")
+    return JSONResponse(
+        status_code=200,
+        content=podcast_task.script
+    )
 
 @router.post("/{task_id}/audio", response_model=TaskCreate)
 async def create_podcast_audio(task_id: str, db: Session = Depends(get_db), user=Depends(get_current_user)):
@@ -74,7 +81,8 @@ async def create_podcast_audio(task_id: str, db: Session = Depends(get_db), user
     except HTTPException as e:
         raise e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Unexpected error: {str(e)}")
 
 @router.get("/{task_id}/audio", response_class=Response)
 async def get_podcast_audio(task_id: str, db: Session = Depends(get_db), user=Depends(get_current_user)):

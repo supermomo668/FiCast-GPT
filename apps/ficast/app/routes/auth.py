@@ -1,7 +1,11 @@
+from typing import Optional
+from datetime import timedelta
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
-from ..models.request import Token
+
+from ..models.auth import TokenIssueModel, AdminTokenIssueModel, AccessLevelEnum, AccessLevelModel, TokenSourceModel, UserAuthenticationResponse
 from ..services.auth import get_current_user, authenticate_user, create_access_token
 
 router = APIRouter(
@@ -9,31 +13,67 @@ router = APIRouter(
     tags=["auth"]
 )
 
-@router.post("/login", response_model=Token)
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = authenticate_user(
-        form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
-
-    # Assuming authenticate_user returns a dictionary
+@router.post("/login-access-token", response_model=AdminTokenIssueModel)
+async def login_for_access_token(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    access_level: AccessLevelEnum = AccessLevelEnum.ADMIN,  # Default admin access level
+    expire_delta: Optional[timedelta] = None  # Optional duration override
+):
+    user_info = authenticate_user(form_data.username, form_data.password)
+    if not user_info:
+        raise HTTPException(
+            status_code=400, detail="Incorrect username or password")
+    # Create the token with access level and expiration
     access_token = create_access_token(
-        data={"sub": user["username"]})
-    return {"access_token": access_token, "token_type": "bearer"}
+        username=user_info.username, 
+        access_level=access_level,
+        expires_delta=expire_delta
+    )
+    return TokenIssueModel(
+        access_token=access_token,
+        token_type=TokenSourceModel.BEARER,
+        access_level=access_level,
+        expires_in=expire_delta
+    )
 
 @router.get("/check", response_class=JSONResponse)
 async def test_auth(user=Depends(get_current_user)):
     return JSONResponse(
-        status_code=200, content={"auth": "firebase", "user": user["user"]})
+        status_code=200, 
+        content={"auth": "firebase", "user": user["user"]}
+    )
 
-@router.post('/issue-api-token', response_class=JSONResponse)
-async def issue_api_token(user=Depends(get_current_user)):
-    access_token = create_access_token(data={"sub": user["user"]})
-    return JSONResponse(
-        status_code=200, content={"api_token": access_token})
+@router.post('/issue-api-token', response_model=TokenIssueModel)
+async def issue_api_token(
+    user=Depends(get_current_user),
+    access_level: AccessLevelEnum = AccessLevelEnum.FREEMIUM
+    ):
+    # Get access level default settings
+    """
+    Issues an API token with the given access level and expiration duration.
+    Args:
+        user: The user to issue the token for.
+        access_level: The access level of the token
 
-@router.get("/test-api-token", response_class=JSONResponse)
-async def test_api_token(user=Depends(get_current_user)):
-    return JSONResponse(
-        status_code=200, content={"auth": "api_key", "user": user["user"]})
+    Returns:
+        An `APITokenResponseModel` containing the issued API token and its access level.
+    """
+    access_level_info = AccessLevelModel.get_access_level_info(access_level)
+    # Create the token
+    access_token = create_access_token(
+        username=user["user"],
+        access_level=access_level_info,
+    )
+    return TokenIssueModel(
+        api_token=access_token,
+        access_level=access_level
+    )
+
+@router.post(
+    "/test-api-token", response_class=UserAuthenticationResponse)
+async def test_api_token(user_auth=Depends(get_current_user)):
+    return UserAuthenticationResponse(
+        username= user_auth["user"],
+        auth_type= user_auth["auth"]
+    )
 

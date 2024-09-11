@@ -1,3 +1,4 @@
+from os import error
 from pydantic import BaseModel
 from .task_status import TaskStatus
 
@@ -8,4 +9,4 @@ class TaskCreate(BaseModel):
 class TaskStatusResponse(BaseModel):
     script_status: TaskStatus
     audio_status: TaskStatus
-    
+    error: str

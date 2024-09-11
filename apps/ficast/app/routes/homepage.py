@@ -145,7 +145,8 @@ def generate_homepage_html() -> str:
     -H "Authorization: Bearer ${ACCESS_TOKEN}") <br>
     echo $response'''
                 )
-
+    html_content += """
+        <p><b>Note:</b> A schema-consistent JSON script created from the application is available at <a href="/samples/script">/samples/script</a>. However, more script formats is available by changing the input parameter `format`.</p>"""
     html_content += generate_curl_example(
                     "Retrieve Generated Audio",
                     '''response=$(curl -X GET "<this_url>/podcast/$TASK_ID/audio" \\
@@ -154,7 +155,8 @@ def generate_homepage_html() -> str:
     -o data/curl-task-result.wav) <br>
     echo data/curl-task-result.wav'''
                 )
-
+    html_content += """
+        <p><b>Note:</b> An audio podcast generated from the example is available at <a href="/samples/audio">/samples/audio</a>.</p>"""
     html_content += """
             </div>
             <div class="footer">

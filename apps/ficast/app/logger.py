@@ -1,10 +1,12 @@
 # app/logger.py
-import logging
+import logging, os
 from fastapi import Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 import traceback
+
+USE_CELERY = os.getenv("USE_CELERY", "false").lower() in ("true", "1")
 
 # Configure logging
 logging.basicConfig(
@@ -55,3 +57,19 @@ async def generic_exception_handler(request: Request, exc: Exception):
         status_code=500,
         content={"detail": "Internal Server Error", "error": str(exc)}
     )
+
+if not USE_CELERY:
+    import threading
+    lock = threading.Lock()
+def log_info(msg):
+    if not USE_CELERY:
+        with lock:
+            logger.info(msg)
+    else:
+        logger.info(msg)
+def log_error(msg):
+    if not USE_CELERY:
+        with lock:
+            logger.error(msg)
+    else:
+        logger.error(msg)

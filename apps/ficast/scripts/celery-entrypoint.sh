@@ -1,0 +1,1 @@
+celery -A app.tasks.task.celery_app "$@"
