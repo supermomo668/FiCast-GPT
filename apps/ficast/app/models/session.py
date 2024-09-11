@@ -12,7 +12,7 @@ if not DATABASE_URL:
     raise ValueError("DATABASE_URL must be set in the environment variables.")
 
 engine = create_engine(
-    DATABASE_URL, connect_args={"check_same_thread": True}, echo=True)
+    DATABASE_URL, connect_args={"check_same_thread": False})
 
 # Create a configured "Session" class
 SessionLocal = sessionmaker(

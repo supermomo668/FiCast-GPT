@@ -1,5 +1,6 @@
 from os import error
 from pydantic import BaseModel
+from typing import Optional
 from .task_status import TaskStatus
 
 class TaskCreate(BaseModel):
@@ -9,4 +10,4 @@ class TaskCreate(BaseModel):
 class TaskStatusResponse(BaseModel):
     script_status: TaskStatus
     audio_status: TaskStatus
-    error: str
+    error: Optional[str] = None

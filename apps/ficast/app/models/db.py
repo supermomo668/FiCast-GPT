@@ -23,7 +23,7 @@ class PodcastTask(Base):
     task_id = Column(String, unique=True, primary_key=True, index=True)
     script_status = Column(Enum(TaskStatus), default=TaskStatus.PENDING)  # Status for script generation
     script = Column(JSON, nullable=True)  # Stores the JSON script (nullable initially)
-    chat_history = Column(JSONEncodedDict, nullable=False)  # Stores the chat history (nullable initially)
+    chat_history = Column(JSONEncodedDict, nullable=True)  # Stores the chat history (nullable initially)
     audio_status = Column(Enum(TaskStatus), default=TaskStatus.PENDING)  # Status for audio generation
     audio = Column(LargeBinary, nullable=True)  # Stores the audio file as binary data
     error_message = Column(Text, nullable=True)  # New field to store errors

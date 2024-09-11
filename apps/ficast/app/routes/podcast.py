@@ -35,7 +35,6 @@ async def create_podcast(
 async def get_podcast_status(task_id: str, db: Session = Depends(get_db), user=Depends(get_current_user)):
     podcast_task = db.query(PodcastTask).filter(
         PodcastTask.task_id == task_id).first()
-    
     if not podcast_task:
         raise HTTPException(status_code=404, detail="Task not found")
     return TaskStatusResponse(

@@ -95,7 +95,9 @@ class Task:
             self._save_error(f"Failed to enqueue audio task: {str(e)}")
             raise HTTPException(status_code=500, detail="Failed to enqueue audio task")
 
-    def _execute_create_podcast_task(self, podcast_request: PodcastRequest):
+    def _execute_create_podcast_task(
+        self, podcast_request: PodcastRequest
+        ):
         local_session = ScopedSession()
         try:
             self._update_task_status(
@@ -218,11 +220,11 @@ class Task:
             session.rollback()
              
 @shared_task(bind=True)
-def create_podcast_task(self, task_id, podcast_request):
+def create_podcast_task(self, task_id, podcast_request: dict):
     db_session = ScopedSession()  # Create a new session for the Celery task
     try:
         task = Task(db=db_session, task_id=task_id)
-        task._execute_create_podcast_task(podcast_request)
+        task._execute_create_podcast_task(PodcastRequest(**podcast_request))
     finally:
         ScopedSession.remove()  # Clean up session
 
