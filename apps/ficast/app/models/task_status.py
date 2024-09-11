@@ -1,12 +1,16 @@
 from enum import Enum
 
+from pydantic import BaseModel
+
 class TaskStatus(Enum):
-    PENDING = "PENDING"
-    STARTED = "STARTED"
-    SUCCESS = "SUCCESS"
-    FAILURE = "FAILURE"
-    RETRY = "RETRY"
-    REVOKED = "REVOKED"
+    PENDING = "pending"
+    STARTED = "started"
+    GENERATING_SCRIPT = "generating_script"
+    SCRIPT_CREATED = "script_created"
+    GENERATING_AUDIO = "generating_audio"
+    SUCCESS = "success"
+    FAILURE = "failure"
+    AUDIO_CREATED = "audio_created"
 
     @classmethod
     def from_celery_state(cls, state: str):
@@ -22,3 +26,7 @@ class TaskStatus(Enum):
             return cls[state]
         except KeyError:
             raise ValueError(f"Unknown Celery task state: {state}")
+
+class TaskStatusUpdate(BaseModel):
+    task_id: str
+    status: TaskStatus

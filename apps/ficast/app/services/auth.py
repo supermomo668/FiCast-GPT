@@ -14,7 +14,7 @@ import firebase_admin
 
 from ..models.auth import AccessLevelEnum, AccessLevelModel, TokenEncodingModel, UserAuthenticationResponse, TokenSourceModel
 from ..logger import logger
-from ..utils import load_env_credentials
+from ..utils.startup import load_env_credentials
 
 # Load environment variables
 from dotenv import load_dotenv

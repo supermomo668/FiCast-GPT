@@ -3,8 +3,8 @@ from pydantic import BaseModel
 
 class Participant(BaseModel):
     name: str
-    description: str
-    model: str
+    description: Optional[str] = None
+    model: Optional[str] = None
     role: Optional[str] = None
 
 class PodcastRequest(BaseModel):
