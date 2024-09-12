@@ -34,7 +34,9 @@ class Task:
         self.thread = None
         log_info(f"Task ID: {self.task_id}")
 
-    def create_podcast(self, podcast_request: PodcastRequest) -> TaskStatusUpdate:
+    def create_podcast(
+        self, podcast_request: PodcastRequest
+        ) -> TaskStatusUpdate:
         log_info(f"Task {self.task_id}: Starting podcast creation with {len(podcast_request.participants)} participants.")
         log_info(f"Task {self.task_id}: Audio generation started for podcast {podcast_request.topic}.")
         try:
