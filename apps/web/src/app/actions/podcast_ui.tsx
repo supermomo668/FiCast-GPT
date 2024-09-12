@@ -1,14 +1,18 @@
 "use server";
 
+import { ReactElement } from "react";
+import type { JSXElementConstructor } from 'react';
+
 import { Participant } from "@/app/models/particpants";
 import { MessageType } from "@/app/models/messages";
-import { Message } from "@/app/(components)/Message"; // Use Message from components
 import { getMessagesNewBackend } from "./backend_message";
 import { createStreamableUI } from "ai/rsc";
+import { MessageDisplay } from "@/app/(components)/Message"; // Import MessageDisplay
+import { PodcastGroup } from "../models/podcast";
 
 export async function getPodcast(
   topic: string,
-  speakers: Participant[] // Accept an array of Participant objects
+  speakers: PodcastGroup // Accept an array of Participant objects
 ): Promise<JSX.Element | JSX.Element[] | null> {
   const weatherUI = createStreamableUI();
   weatherUI.update(<div>Loading podcast...</div>);
@@ -18,43 +22,23 @@ export async function getPodcast(
   try {
     const messages = await getMessagesNewBackend(
       speakerNames, topic, (msgList: MessageType[]) => {
-      weatherUI.update(
-        <div>
-          {msgList.map((msg: MessageType) => (
-            <Message 
-              key={msg.id} 
-              message={{
-                name: msg.name,
-                message: msg.message,
-                thought: msg.thought
-              }} 
-            />
-          ))}
-        </div>
-      );
+      weatherUI.update(<MessageDisplay messages={msgList} />);
     });
 
-    weatherUI.done(
-      <div>
-        {messages.map((msg: MessageType) => (
-          <Message 
-            key={msg.id} 
-            message={{
-              name: msg.name,
-              message: msg.message,
-              thought: msg.thought
-            }} 
-          />
-        ))}
-      </div>
-    );
+    weatherUI.done(<MessageDisplay messages={messages} />);
   } catch (error) {
     console.error("Error fetching podcast messages:", error);
-    weatherUI.done(
-    <div className="text-red-500">Failed to load podcast messages.
-    </div>
-    );
+    weatherUI.done(<div className="text-red-500">Failed to load podcast messages.</div>);
   }
-
-  return weatherUI.value!;
+  // Return null if the value is undefined or null
+  if (weatherUI.value === undefined || weatherUI.value === null) {
+    return null;
+  } else if (Array.isArray(weatherUI.value) && weatherUI.value.every((item) => item instanceof Element)
+  ) {
+    return weatherUI.value;
+  } else if (weatherUI.value instanceof Element) {
+    return weatherUI.value as ReactElement<any, string | JSXElementConstructor<any>> | ReactElement<any, string | JSXElementConstructor<any>>[];
+  } else {
+    throw new Error('Invalid value type');
+  }
 }

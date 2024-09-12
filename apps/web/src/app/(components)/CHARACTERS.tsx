@@ -136,10 +136,12 @@ export const CharacterImages = new Map(
   LANDING_CHARACTERS.map((ch) => [ch.name, ch.image])
 );
 
+const BlankAvatarImage = "https://www.shutterstock.com/image-vector/user-profile-icon-vector-avatar-600nw-2220431045.jpg";
+
 export const CUSTOM = {
   name: "Custom",
   description: "Custom character",
-  image: "https://www.shutterstock.com/image-vector/user-profile-icon-vector-avatar-600nw-2220431045.jpg",
+  image: BlankAvatarImage,
   model: null,
   role: "guest",
 };

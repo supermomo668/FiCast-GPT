@@ -9,6 +9,7 @@ export interface Character {
 export interface Participant {
   name: string;
   description: string;
-  model?: string | null; // Model can be string or null
+  // Model can be string or null
+  model?: string | null; 
   role: string; // e.g., "guest" or "host"
 }

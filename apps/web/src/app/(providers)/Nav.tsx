@@ -47,7 +47,7 @@ export default function Nav() {
         </p>
       </NavbarContent>
 
-      <NavbarContent justify="end">
+      <NavbarContent justify="end" className="flex space-x-4">
         <NavbarItem>
           <NextLink href="/plans" passHref>
             <button className={styles["button-primary"]}>

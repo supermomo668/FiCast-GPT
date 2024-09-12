@@ -1,4 +1,4 @@
-import { MessageEntry } from "@/app/models/messages";
+import { MessageEntry, MessageType } from "@/app/models/messages";
 import { LANDING_CHARACTERS, CUSTOM } from "@/app/(components)/CHARACTERS"; // Import CHARACTERS directly
 
 export function Message({ message }: { message: MessageEntry }) {
@@ -43,6 +43,27 @@ function MessageWithThoughts({ message, speaker, thought }: { message: string; s
       {thought && (
         <p className="text-sm text-purple-300 italic">Inner Thought: {thought}</p>
       )}
+    </div>
+  );
+};
+
+interface MessageDisplayProps {
+  messages: MessageType[];
+}
+
+export function MessageDisplay({ messages }: MessageDisplayProps) {
+  return (
+    <div>
+      {messages.map((msg: MessageType) => (
+        <Message
+          key={msg.id}
+          message={{
+            name: msg.name,
+            message: msg.message,
+            thought: msg.thought,
+          }}
+        />
+      ))}
     </div>
   );
 }

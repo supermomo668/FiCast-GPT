@@ -1,4 +1,5 @@
 "use client";
+// Description: Landing page components for defining the exact visuals of the landing page: character selection, start button ...etc
 
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -93,7 +94,8 @@ export function CharacterSelector({ onChange }: CharacterSelectorProps) {
                 src={ch.image}
                 alt={ch.name}
                 className="object-contain rounded-lg"
-                style={{ maxWidth: "100%", maxHeight: "100%" }} // Set flexible max size
+                style={{ maxWidth: "100%", maxHeight: "100%" }} 
+                // Set flexible max size
               />
             </div>
             <br />
@@ -181,6 +183,7 @@ export function Landing({ onStart }: LandingProps) {
       <header className="text-center">
         <h1 className="text-6xl font-extrabold">Fantasy Podcast</h1>
         <h2 className="text-xl mt-8">Pick your participants</h2>
+        <p className="text-lg mt-4 italic">Note: Select at least <u>two</u>. Or see a sample conversation between Darth Vader & Harry Potter about food!</p>
       </header>
 
       <CharacterSelector onChange={setSpeakers} />

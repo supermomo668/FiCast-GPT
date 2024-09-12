@@ -47,3 +47,5 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 ## Dev Notes
 
 You may use [findpng](https://www.findpng.com/) to generate transparent portraits for free.
+
+Prompt: {{Character Name}} the podcast host cartoon close-up Portrait

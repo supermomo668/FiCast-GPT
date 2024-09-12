@@ -34,16 +34,18 @@ export async function getMessagesNewBackend(
   console.log("Data received:", data);
   // Mapping the dialogues to the required MessageType structure
   const converted: MessageType[] = data.dialogues.map((entry) => ({
-    id: Math.random().toString(32).substring(2), // Generate a random unique ID
-    message: entry.dialogue.trim(), // Extract and trim the dialogue
-    name: entry.speaker.name, // Use the speaker's name
+    id: Math.random().toString(32).substring(2), // unique ID
+    name: entry.speaker.name, // speaker's name
+    message: entry.dialogue.trim(), // the dialogue
+    thought: entry.inner_thought.trim()
   }));
-
-  // Optionally filter based on known characters
-  const filtered = converted.filter((entry: MessageType) => {
-    return LANDING_CHARACTERS.some((ch) => ch.name === entry.name);
-  });
-
-  return filtered;
+  return converted;
 }
 
+
+// Optionally filter based on known characters
+// const filtered = converted.filter((entry: MessageType) => {
+//   return LANDING_CHARACTERS.some((ch) => ch.name === entry.name);
+// });
+
+// return filtered;
