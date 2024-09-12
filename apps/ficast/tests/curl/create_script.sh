@@ -2,7 +2,7 @@ response=$(curl -X POST "http://127.0.0.1:42110/podcast/create" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -d '{
-    "topic": "health & longevity",
+    "topic": "world peace",
     "n_rounds": 20,
     "participants": [
       {
@@ -12,8 +12,8 @@ response=$(curl -X POST "http://127.0.0.1:42110/podcast/create" \
         "role": "host"
       },
       {
-        "name": "David Sinclair",
-        "description": "David Sinclair is a Harvard Medical Expert",
+        "name": "Obi Wan",
+        "description": "Obi Wan is a star wars character who upholds justice",
         "model": "gpt-3.5-turbo"
       }
     ]
