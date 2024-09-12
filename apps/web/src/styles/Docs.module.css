@@ -1,0 +1,71 @@
+.sidebar {
+  width: 250px;
+  background-color: var(--sidebar-bg, hsl(0, 0%, 98%)); /* Light mode background */
+  color: var(--sidebar-text, hsl(222, 15%, 20%)); /* Light mode text */
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark mode for sidebar */
+.dark .sidebar {
+  background-color: var(--sidebar-bg-dark, hsl(222, 25%, 12%)); /* Dark mode darker background */
+  color: var(--sidebar-text-dark, hsl(210, 25%, 85%)); /* Dark mode light text */
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar li {
+  padding: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.sidebar li:hover {
+  background-color: var(--sidebar-hover-bg, hsl(210, 16%, 90%)); /* Light mode hover */
+  color: var(--sidebar-hover-text, hsl(222, 15%, 15%)); /* Light mode text on hover */
+}
+
+.dark .sidebar li:hover {
+  background-color: var(--sidebar-hover-bg-dark, hsl(222, 25%, 18%)); /* Dark mode hover with darker shade */
+  color: var(--sidebar-hover-text-dark, hsl(210, 25%, 90%)); /* Dark mode hover text */
+}
+
+.active {
+  background-color: var(--sidebar-active-bg, hsl(210, 20%, 85%)); /* Light mode active */
+  color: var(--sidebar-active-text, hsl(222, 15%, 20%)); /* Light mode active text */
+  font-weight: bold;
+}
+
+.dark .active {
+  background-color: var(--sidebar-active-bg-dark, hsl(222, 30%, 18%)); /* Dark mode active */
+  color: var(--sidebar-active-text-dark, hsl(210, 30%, 85%)); /* Dark mode active text */
+}
+
+/* Main content */
+.mainContent {
+  flex-grow: 1;
+  padding: 20px;
+}
+
+/* Scoped code block styles */
+.codeBlock pre {
+  background-color: var(--code-bg, hsl(0, 0%, 98%)); /* Light mode code block background */
+  color: var(--code-text, hsl(222, 15%, 20%)); /* Light mode code text */
+  border-radius: 6px;
+  padding: 16px;
+  overflow-x: auto;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.dark .codeBlock pre {
+  background-color: var(--code-bg-dark, hsl(222, 25%, 12%)); /* Dark mode code block darker background */
+  color: var(--code-text-dark, hsl(210, 25%, 85%)); /* Dark mode light text */
+}
+
+.codeBlock code {
+  font-family: "Courier New", Courier, monospace;
+}

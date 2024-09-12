@@ -11,6 +11,7 @@ import {
 import NextLink from "next/link";
 import { useAuth } from "@/hooks/useAuth"; // Firebase auth hook
 import styles from "@/styles/Nav.module.css";
+import { CUSTOM } from "@/app/(components)/CHARACTERS"; // Import CHARACTERS directly
 
 export default function Nav() {
   const { user, signOut } = useAuth(); // Use Firebase auth
@@ -48,6 +49,24 @@ export default function Nav() {
 
       <NavbarContent justify="end">
         <NavbarItem>
+          <NextLink href="/plans" passHref>
+            <button className={styles["button-primary"]}>
+              API Plans
+              {/* Subscript for Early Bird Special */}
+              <sub style={{ fontSize: "0.6rem", marginLeft: "2px", color: "purple" }}>
+                Early Bird
+              </sub>
+            </button>
+          </NextLink>
+        </NavbarItem>
+
+        <NavbarItem>
+          <NextLink href="/docs" passHref>
+            <button className={styles["button-primary"]}>API Docs</button>
+          </NextLink>
+        </NavbarItem>
+
+        <NavbarItem>
           <div className="container mx-auto p-4">
             {!user && (
               <div className="flex flex-col items-center justify-center">
@@ -63,7 +82,7 @@ export default function Nav() {
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 >
                   <Avatar
-                    src={user.photoURL ?? "/default-avatar.png"}
+                    src={user.photoURL ?? CUSTOM.image}
                     alt={user.displayName ?? "User Avatar"}
                     className="rounded-full w-10 h-10"
                   />

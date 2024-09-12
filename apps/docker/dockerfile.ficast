@@ -1,0 +1,24 @@
+# Use an official Python base image
+FROM python:3.11-slim
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy the necessary files into the container
+COPY ./ficast /app/ficast
+COPY pyproject.toml poetry.lock /app/
+
+# Install Poetry
+RUN pip install poetry==1.8.3
+
+# Install the dependencies specified in pyproject.toml, including the "api" group
+RUN poetry install --no-interaction --no-ansi --with api
+
+# Make sure the entrypoint script is executable
+RUN chmod +x /app/ficast/scripts/entrypoint.sh
+
+# Set the entrypoint to the entrypoint script
+ENTRYPOINT ["/app/ficast/scripts/api-entrypoint.sh"]
+
+# Set the default command to start the FastAPI app
+CMD ["--host", "0.0.0.0", "--port", "8000"]

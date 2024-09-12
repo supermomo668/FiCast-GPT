@@ -1,3 +1,4 @@
+// apps/web/src/app/(providers)/ProvidersWrapper.tsx
 "use client";
 import { NextUIProvider } from "@nextui-org/react";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
@@ -12,7 +13,9 @@ export default function ProvidersWrapper({
     // You can still use other providers like NextUIProvider or NextThemesProvider if needed
     <>
       <NextThemesProvider defaultTheme="system" attribute="class">
-        <NextUIProvider>{children}</NextUIProvider>
+        <NextUIProvider>
+          {children}
+        </NextUIProvider>
       </NextThemesProvider>
     </>
   );

@@ -4,8 +4,8 @@
 
 @layer base {
   :root {
-    --background: hsl(0, 0%, 100%); /* fallback for light mode */
-    --foreground: hsl(222.2, 84%, 4.9%); /* fallback for dark text */
+    --background: hsl(0, 0%, 98%); /* Light mode background */
+    --foreground: hsl(222.2, 84%, 4.9%); /* Dark mode text */
     --border: hsl(214.3, 31.8%, 91.4%);
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
@@ -62,10 +62,34 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  .podcast-card {
+    background-color: var(--card-background);
+    color: var(--card-foreground);
+    border: 1px solid var(--border);
+  }
+
+  .highlight {
+    background-color: var(--highlight-background);
+    padding: 4px;
+    border-radius: 4px;
+  }
+  /* Fixed custom utility for background color */
+  .bg-primary-light {
+    background-color: rgba(255, 255, 255, 0.1); /* Light background for dark mode */
+  }
+
+  .text-primary-foreground {
+    color: var(--primary-foreground);
+  }
+
+  .bg-darkBlue {
+    background-color: hsl(220, 20%, 20%);
+  }
 }
 
 @layer base {
-  * {
+  {
     @apply border-border;
   }
   body {
@@ -75,5 +99,64 @@
   /* Add a utility class for the dark blue background */
   .bg-darkBlue {
     background-color: hsl(var(--darkBlue));
+  }
+}
+
+@layer base {
+  /* Modal styling */
+  .modal {
+    background-color: hsl(0, 0%, 10%); /* Dark background for the modal */
+    color: hsl(0, 0%, 95%); /* Light text color */
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    z-index: 60; /* Ensure it's above other elements */
+  }
+
+  .modal-header {
+    font-weight: bold;
+    font-size: 1.5rem;
+  }
+
+  .modal p {
+    font-size: 1rem;
+    margin-top: 1rem;
+  }
+
+  .modal button {
+    background-color: hsl(260, 50%, 50%);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    margin-top: 1.5rem;
+    cursor: pointer;
+  }
+
+  .modal button:hover {
+    background-color: hsl(260, 50%, 60%);
+  }
+
+  /* Ensure dimmed background covers full viewport */
+  .fixed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(213, 138, 138, 0.75); /* Ensure the opacity is working */
+  }
+}
+
+@layer base {
+  /* Custom styling for the API Plan button */
+  .api-plan-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .api-plan-early-bird {
+    font-size: 0.75rem; /* Smaller text for early-bird special */
+    color: hsl(270, 100%, 70%); /* Light purple color for visibility */
   }
 }

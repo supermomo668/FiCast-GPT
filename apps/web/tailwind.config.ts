@@ -75,7 +75,8 @@ const config = {
     },
   },
   plugins: [
-    require("tailwindcss-animate"), require("daisyui"),
+    require("tailwindcss-animate"), 
+    require("daisyui"),
     require('tailwindcss'),
     require('autoprefixer'),
   ],
