@@ -10,7 +10,13 @@ dotenv.load_dotenv(".env", override=True)
 from .routes import podcast, auth, basic, samples
 from .models.session import init_db
 
-app = FastAPI()
+app = FastAPI(
+    title="LoFi Podcast API",
+    # openapi_url=f"/api/v1/openapi.json",
+    # docs_url=f"/api/v1/docs",
+    # redoc_url=f"/api/v1/redoc",
+    root_path="/app"
+)
 
 @contextmanager
 def lifespan(app: FastAPI):
