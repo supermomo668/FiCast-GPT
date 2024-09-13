@@ -9,13 +9,14 @@ dotenv.load_dotenv(".env", override=True)
 
 from .routes import podcast, auth, basic, samples
 from .models.session import init_db
+from .constants import API_DOC, API_REDOC, APP_ROOT
 
 app = FastAPI(
     title="LoFi Podcast API",
     # openapi_url=f"/api/v1/openapi.json",
-    # docs_url=f"/api/v1/docs",
-    # redoc_url=f"/api/v1/redoc",
-    root_path="/app"
+    docs_url=API_DOC,
+    redoc_url=API_REDOC,
+    root_path=APP_ROOT
 )
 
 @contextmanager
@@ -32,7 +33,8 @@ app.include_router(podcast.router)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.getenv("ALLOWED_ORIGINS", "localhost,127.0.0.1").split(","),
+    allow_origins=os.getenv(
+        "ALLOWED_ORIGINS", "localhost,127.0.0.1").split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=os.getenv("ALLOWED_HEADERS", "*").split(","),

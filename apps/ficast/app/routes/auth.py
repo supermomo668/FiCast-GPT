@@ -13,7 +13,7 @@ router = APIRouter(
     tags=["auth"]
 )
 
-@router.post("/login-access-token", response_model=AdminTokenIssueModel)
+@router.post("/login-access-token", response_model=TokenIssueModel)
 async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
     access_level: AccessLevelEnum = AccessLevelEnum.ADMIN,  # Default admin access level
@@ -37,7 +37,8 @@ async def login_for_access_token(
     )
 
 @router.get("/check", response_class=JSONResponse)
-async def test_auth(user=Depends(get_current_user)):
+async def test_auth(
+    user:UserAuthenticationResponse=Depends(get_current_user)):
     return JSONResponse(
         status_code=200, 
         content={"auth": "firebase", "user": user["user"]}
@@ -45,7 +46,7 @@ async def test_auth(user=Depends(get_current_user)):
 
 @router.post('/issue-api-token', response_model=TokenIssueModel)
 async def issue_api_token(
-    user=Depends(get_current_user),
+    user_auth:UserAuthenticationResponse=Depends(get_current_user),
     access_level: AccessLevelEnum = AccessLevelEnum.FREEMIUM
     ):
     # Get access level default settings
@@ -61,7 +62,7 @@ async def issue_api_token(
     access_level_info = AccessLevelModel.get_access_level_info(access_level)
     # Create the token
     access_token = create_access_token(
-        username=user["user"],
+        username=user_auth.username,
         access_level=access_level_info,
     )
     return TokenIssueModel(
@@ -69,11 +70,11 @@ async def issue_api_token(
         access_level=access_level
     )
 
-@router.post(
-    "/test-api-token", response_class=UserAuthenticationResponse)
-async def test_api_token(user_auth=Depends(get_current_user)):
+@router.post("/test-api-token")
+async def test_api_token(
+    user_auth:UserAuthenticationResponse=Depends(get_current_user)):
     return UserAuthenticationResponse(
-        username= user_auth["user"],
-        auth_type= user_auth["auth"]
+        username= user_auth.username,
+        auth_type=user_auth.auth_type
     )
 
