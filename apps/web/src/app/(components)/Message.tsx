@@ -1,7 +1,7 @@
-import { MessageEntry, MessageType } from "@/app/models/messages";
+import { MessageUI, MessageEntryUI } from "@/app/models/messages";
 import { LANDING_CHARACTERS, CUSTOM } from "@/app/(components)/CHARACTERS"; // Import CHARACTERS directly
 
-export function Message({ message }: { message: MessageEntry }) {
+export function Message({ message }: { message: MessageUI }) {
   // Find the character's image based on the message name
   const character = LANDING_CHARACTERS.find((ch) => ch.name === message.name);
 
@@ -48,13 +48,13 @@ function MessageWithThoughts({ message, speaker, thought }: { message: string; s
 };
 
 interface MessageDisplayProps {
-  messages: MessageType[];
+  messages: MessageEntryUI[];
 }
 
 export function MessageDisplay({ messages }: MessageDisplayProps) {
   return (
     <div>
-      {messages.map((msg: MessageType) => (
+      {messages.map((msg: MessageEntryUI) => (
         <Message
           key={msg.id}
           message={{

@@ -48,6 +48,19 @@ export default function Nav() {
       </NavbarContent>
 
       <NavbarContent justify="end" className="flex space-x-4">
+        {/* New Creatives Content Automation button (greyed out) */}
+        <NavbarItem>
+          <button
+            className={`${styles["button-primary"]} cursor-not-allowed text-gray-500`}
+            disabled
+          >
+            Creatives Content Automation
+            <sub style={{ fontSize: "0.6rem", marginLeft: "2px", color: "inherit" }}>
+              coming soon
+            </sub>
+          </button>
+        </NavbarItem>
+
         <NavbarItem>
           <NextLink href="/plans" passHref>
             <button className={styles["button-primary"]}>

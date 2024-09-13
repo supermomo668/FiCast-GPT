@@ -1,25 +1,23 @@
-"use client";
-// Description: Landing page components for defining the exact visuals of the landing page: character selection, start button ...etc
-
-import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
+
+import { Participant, PodcastGroup } from "@/app/models/participants";
+import { CharacterSelectorProps, LandingProps } from "@/app/models/landing";
+
 import { LANDING_CHARACTERS, CUSTOM } from "./CHARACTERS";
-import { Participant } from "@/app/models/particpants";
 
-interface CharacterSelectorProps {
-  onChange: (selected: Set<string>) => void;
-}
-
-interface LandingProps {
-  onStart: (data: { topic: string; participants: Participant[] }) => void;
-}
 
 const MAX_CHARACTERS = 10;
 
-export function CharacterSelector({ onChange }: CharacterSelectorProps) {
+export function CharacterSelector({
+  onChange,
+  setSelectedSpeakers,
+  customName,
+  setCustomName,
+  customDescription,
+  setCustomDescription,
+}: CharacterSelectorProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [customName, setCustomName] = useState<string>("Custom");
-  const [customDescription, setCustomDescription] = useState<string>("");
 
   function buttonHandler(name: string) {
     return () => {
@@ -94,8 +92,7 @@ export function CharacterSelector({ onChange }: CharacterSelectorProps) {
                 src={ch.image}
                 alt={ch.name}
                 className="object-contain rounded-lg"
-                style={{ maxWidth: "100%", maxHeight: "100%" }} 
-                // Set flexible max size
+                style={{ maxWidth: "100%", maxHeight: "100%" }} // Set flexible max size
               />
             </div>
             <br />
@@ -152,14 +149,20 @@ export function CharacterSelector({ onChange }: CharacterSelectorProps) {
 
 export function Landing({ onStart }: LandingProps) {
   const [topic, setTopic] = useState<string>("An interesting topic");
+  const [n_rounds, setNRounds] = useState<number>(10);
   const [speakers, setSpeakers] = useState<Set<string>>(new Set());
+  const [customName, setCustomName] = useState<string>("Custom");
+  const [customDescription, setCustomDescription] = useState<string>("");
 
+  /**
+   * Handles the start of the podcast by mapping the selected speakers to their corresponding character data. 
+   */
   const handleStart = () => {
     const participants: Participant[] = Array.from(speakers).map((name) => {
       if (name === "Custom") {
         return {
-          name: "Custom", // Can be replaced with customName
-          description: "Custom character description", // Can be replaced with customDescription
+          name: customName,
+          description: customDescription,
           model: null, // Handled by backend
           role: "guest",
         };
@@ -174,8 +177,17 @@ export function Landing({ onStart }: LandingProps) {
       };
     });
 
-    console.log("Participants for the podcast:", participants);
-    onStart({ topic, participants });
+    const podcast_group: PodcastGroup = {
+      hosts: participants.filter((p) => p.role === "host"),
+      guests: participants.filter((p) => p.role === "guest"),
+    };
+
+    console.log("Participants for the podcast:",podcast_group);
+    onStart({
+      topic: topic,
+      n_rounds: n_rounds,
+      participants: participants,
+    });
   };
 
   return (
@@ -183,10 +195,20 @@ export function Landing({ onStart }: LandingProps) {
       <header className="text-center">
         <h1 className="text-6xl font-extrabold">Fantasy Podcast</h1>
         <h2 className="text-xl mt-8">Pick your participants</h2>
-        <p className="text-lg mt-4 italic">Note: Select at least <u>two</u>. Or see a sample conversation between Darth Vader & Harry Potter about food!</p>
+        <p className="text-lg mt-4 italic">
+          Note: Select at least <u>two</u>. Or see a sample conversation between Darth Vader & Harry Potter about food!
+        </p>
       </header>
 
-      <CharacterSelector onChange={setSpeakers} />
+      <CharacterSelector
+        onChange={setSpeakers}
+        selectedSpeakers={speakers}
+        setSelectedSpeakers={setSpeakers}
+        customName={customName}
+        setCustomName={setCustomName}
+        customDescription={customDescription}
+        setCustomDescription={setCustomDescription}
+      />
 
       <section className="text-center mb-8 mt-8">
         <h2 className="text-xl">Choose your topic</h2>

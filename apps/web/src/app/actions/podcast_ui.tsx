@@ -1,44 +1,47 @@
 "use server";
 
 import { ReactElement } from "react";
-import type { JSXElementConstructor } from 'react';
-
-import { Participant } from "@/app/models/particpants";
-import { MessageType } from "@/app/models/messages";
-import { getMessagesNewBackend } from "./backend_message";
+import { MessageEntryUI } from "@/app/models/messages";
+import { fetchPodcastScript, getMessagesNewBackend } from "./backend_message";
 import { createStreamableUI } from "ai/rsc";
 import { MessageDisplay } from "@/app/(components)/Message"; // Import MessageDisplay
-import { PodcastGroup } from "../models/podcast";
+import { Participant } from "../models/participants";
+import { convertDialoguesToMessages } from "../utils/messageConverter";
+import { FiCastAPIResponse, PodcastRequestData } from "../models/api_entry";
 
-export async function getPodcast(
-  topic: string,
-  speakers: PodcastGroup // Accept an array of Participant objects
-): Promise<JSX.Element | JSX.Element[] | null> {
+export async function getPodcast({
+  topic,
+  n_rounds,
+  participants
+}: PodcastRequestData): Promise<JSX.Element | JSX.Element[] | null> {
+  
   const weatherUI = createStreamableUI();
   weatherUI.update(<div>Loading podcast...</div>);
-
-  const speakerNames = speakers.map((speaker) => speaker.name);
-
+  const podcast_request: PodcastRequestData = {
+    topic: topic,
+    n_rounds: n_rounds,
+    participants: participants,
+  }
   try {
-    const messages = await getMessagesNewBackend(
-      speakerNames, topic, (msgList: MessageType[]) => {
-      weatherUI.update(<MessageDisplay messages={msgList} />);
-    });
-
-    weatherUI.done(<MessageDisplay messages={messages} />);
+    const podcast: FiCastAPIResponse = await fetchPodcastScript(podcast_request);
+    const messages: MessageEntryUI[] = convertDialoguesToMessages(podcast.dialogues);
+    // const messages = await getMessagesNewBackend(participants, topic, (msgList: MessageEntryUI[]) => {
+    //   weatherUI.update(<MessageDisplay messages={msgList} />);
+    // });
+    weatherUI.update(<MessageDisplay messages={messages} />);
+    // weatherUI.done(<MessageDisplay messages={messages} />);
   } catch (error) {
     console.error("Error fetching podcast messages:", error);
     weatherUI.done(<div className="text-red-500">Failed to load podcast messages.</div>);
   }
-  // Return null if the value is undefined or null
-  if (weatherUI.value === undefined || weatherUI.value === null) {
+
+  const value = weatherUI.value;
+  if (!value || typeof value === "undefined") {
     return null;
-  } else if (Array.isArray(weatherUI.value) && weatherUI.value.every((item) => item instanceof Element)
-  ) {
-    return weatherUI.value;
-  } else if (weatherUI.value instanceof Element) {
-    return weatherUI.value as ReactElement<any, string | JSXElementConstructor<any>> | ReactElement<any, string | JSXElementConstructor<any>>[];
-  } else {
-    throw new Error('Invalid value type');
   }
+
+  if (Array.isArray(value) || (value as ReactElement)?.type) {
+    return value as JSX.Element | JSX.Element[];
+  }
+  return weatherUI.value as JSX.Element;
 }

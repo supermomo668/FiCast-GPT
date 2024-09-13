@@ -1,76 +1,58 @@
 "use server";
 
-import { MessageType } from "@/app/models/messages";
-import { FiCastAPIResponse } from "@/app/models/api_entry";
-import { LANDING_CHARACTERS } from "@/app/(components)/CHARACTERS";
+import { MessageEntryUI } from "@/app/models/messages";
+import { FiCastAPIResponse, PodcastRequestData } from "@/app/models/api_entry";
+import { convertDialoguesToMessages } from "@/app/utils/messageConverter"; // Import the utility function
+import { Participant } from "../models/participants";
 
-// Define the server-side access token (retrieved from environment variables)
 const BACKEND_ACCESS_TOKEN = process.env.NEXT_PUBLIC_BACKEND_ACCESS_TOKEN;
 
-export async function getMessagesNewBackend(
-  speakers: string[],
-  topic: string,
-  onMessageChanges: (messages: MessageType[]) => void
-): Promise<MessageType[]> {
-  // Create the podcast with a POST request
+export async function fetchPodcastScript({
+  topic, n_rounds = 10, participants}: PodcastRequestData
+  ): Promise<FiCastAPIResponse> {
   console.log("Sending podcast create request...");
+  const requestBody: PodcastRequestData = {
+    topic: topic,
+    n_rounds: n_rounds, 
+    participants: participants.map((speaker) => ({
+      name: speaker.name,
+      description: speaker.description,
+      model: speaker.model,
+      role: speaker.role,
+    })),
+  };
   const podcastCreateResponse = await fetch(
     `${process.env.NEXT_PUBLIC_BACKEND_URL}/podcast/create`,
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${BACKEND_ACCESS_TOKEN}`,
+        Authorization: `Bearer ${process.env.BACKEND_ACCESS_TOKEN}`,
       },
-      body: JSON.stringify({
-        topic: topic,
-        n_rounds: 10, // Number of rounds
-        participants: speakers.map((speaker) => ({
-          name: speaker,
-          description: LANDING_CHARACTERS.find((ch) => ch.name === speaker)?.description || "",
-          model: process.env.NEXT_PUBLIC_DEFAULT_MODEL,
-          role: LANDING_CHARACTERS.find((ch) => ch.name === speaker)?.role || null,
-        })),
-      }),
+      body: JSON.stringify(requestBody),
     }
   );
+  const data: FiCastAPIResponse = await podcastCreateResponse.json();
+  return data;
+}
+// In backend_message.tsx
 
-  if (!podcastCreateResponse.ok) {
-    throw new Error("Failed to create podcast");
+export async function getMessagesNewBackend(
+  speakers: Participant[],
+  n_rounds: number=10,
+  topic: string,
+  onMessageChanges: (messages: MessageEntryUI[]) => void
+): Promise<MessageEntryUI[]> {
+  const podcast_request: PodcastRequestData = {
+    topic: topic,
+    n_rounds: n_rounds,
+    participants: speakers,
   }
+  const data: FiCastAPIResponse = await fetchPodcastScript(podcast_request);
+  console.log("getMessagesNewBackend: Data received from fetchPodcastScript:", data);
 
-  const { task_id } = await podcastCreateResponse.json();
-  console.log(`Retrieving podcast ID ${task_id}`);
-  // Retrieve the script using the task ID
-  const scriptResponse = await fetch(
-    `${process.env.NEXT_PUBLIC_BACKEND_URL}/podcast/${task_id}/script`,
-    {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${BACKEND_ACCESS_TOKEN}`,
-      },
-    }
-  );
-  console.log("Script Response:", scriptResponse);
-  if (!scriptResponse.ok) {
-    throw new Error("Failed to retrieve script");
-  }
+  const messages: MessageEntryUI[] = convertDialoguesToMessages(data.dialogues);
+  console.log("getMessagesNewBackend: Converted messages:", messages);
 
-  const data: FiCastAPIResponse = await scriptResponse.json();
-
-  // Mapping the dialogues to the required MessageType structure
-  const converted: MessageType[] = data.dialogues.map((entry) => ({
-    id: Math.random().toString(32).substring(2), // random unique ID
-    name: entry.speaker.name, // Use the speaker's name
-    message: entry.dialogue.trim(), // Extract and trim the dialogue
-    thought: entry.inner_thought.trim()
-  }));
-  return converted;
-  // Optionally filter based on known characters
-  // const filtered = converted.filter((entry: MessageType) => {
-  //   return LANDING_CHARACTERS.some((ch) => ch.name === entry.name);
-  // });
-
-  // return filtered;
+  return messages;
 }

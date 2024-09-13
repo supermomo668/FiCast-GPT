@@ -1,20 +1,14 @@
 "use server";
 
-import { MessageType } from "./models/messages";
-import { ApiEntryType, FiCastAPIResponse } from "./models/api_entry";
-import { LANDING_CHARACTERS } from "@/app/(components)/CHARACTERS";
-import { Message } from "@/app/(components)/Message";
-
-import { ReactElement } from "react"; // Import ReactElement for type consistency
-
-import { createStreamableUI } from "ai/rsc";
+import { MessageEntryUI, MessageUI } from "./models/messages";
+import { FiCastAPIResponse } from "./models/api_entry";
 
 
 export async function getMessagesNewBackend(
   speakers: string[],
   topic: string,
-  onMessageChanges: (messages: MessageType[]) => void
-): Promise<MessageType[]> {
+  onMessageChanges: (messages: MessageUI[]) => void
+): Promise<MessageUI[]> {
   const search = new URLSearchParams();
   search.append("topic", topic);
   for (const speaker of speakers) {
@@ -32,19 +26,19 @@ export async function getMessagesNewBackend(
 
   const data: FiCastAPIResponse = await resp.json(); // Adjust the type to match the backend response
   console.log("Data received:", data);
-  // Mapping the dialogues to the required MessageType structure
-  const converted: MessageType[] = data.dialogues.map((entry) => ({
+  // Mapping the dialogues to the required MessageUI structure
+  const converted: MessageEntryUI[] = data.dialogues.map((entry) => ({
     id: Math.random().toString(32).substring(2), // unique ID
     name: entry.speaker.name, // speaker's name
     message: entry.dialogue.trim(), // the dialogue
-    thought: entry.inner_thought.trim()
+    thought: entry.thought.trim()
   }));
   return converted;
 }
 
 
 // Optionally filter based on known characters
-// const filtered = converted.filter((entry: MessageType) => {
+// const filtered = converted.filter((entry: MessageUI) => {
 //   return LANDING_CHARACTERS.some((ch) => ch.name === entry.name);
 // });
 

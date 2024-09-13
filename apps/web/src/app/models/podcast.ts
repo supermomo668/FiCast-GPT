@@ -1,22 +1,32 @@
 import { ReactNode } from "react";
-import { Participant } from "./particpants";
+import { PodcastGroup } from "./participants";
 
-export type Hosts = Participant[];
-export type Guests = Participant[];
-export type PodcastGroup = {
-  hosts: Hosts;
-  guests: Guests;
-}
+import { Speaker } from "./participants";
 
-export type PodcastProps = {
+interface PodcastBaseDefinition {
   topic: string;
   abstract?: string;
-  speakers: PodcastGroup;
+  participants: PodcastGroup;
+}
+
+// Podcast component props
+export type PodcastProps = PodcastBaseDefinition & {
   children: ReactNode;
-  onClose?: () => void; // Add onClose as an optional prop
+  onClose?: () => void; 
+  // Add onClose as an optional prop
 };
 
-export interface PodcastData {
-  topic: string;
-  participants: PodcastGroup;
+export interface PodcastUIProps extends PodcastBaseDefinition {
+  messages: JSX.Element | JSX.Element[];
+}
+
+// Podcast data with Dialogues
+export type Dialogues = {
+  speaker: Speaker;
+  dialogue: string;
+  thought: string;
+}[];
+
+export interface PodcastData extends PodcastBaseDefinition {
+  dialogues: Dialogues;
 }

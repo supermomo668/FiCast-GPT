@@ -1,73 +1,92 @@
 "use client";
 
 import { useState } from "react";
+
 import { Landing } from "@/app/(components)/landing";
 import { Podcast } from "@/app/(components)/podcast";
 import { getPodcast } from "./actions/podcast_ui";
-import { SAMPLE_MESSAGES } from "@/app/(components)/samples";
+import { SAMPLE_PODCAST } from "@/app/(components)/samples";
 import { MessageDisplay } from "@/app/(components)/Message";
+import { convertDialoguesToMessages } from "@/app/utils/messageConverter";
+import { PodcastUIProps } from "@/app/models/podcast";
+import { PodcastRequestData } from "@/app/models/api_entry";
 
-import { MessageType } from "@/app/models/messages";
-import { PodcastData } from "@/app/models/podcast";
 
 export default function Home() {
-  const [data, setData] = useState<PodcastData | null>(null);
-  const [podcastContent, setPodcast] = useState<JSX.Element | JSX.Element[] | null>(null); // Allow single element or array
-  const [showPodcast, setShowPodcast] = useState<boolean>(false); // podcast visibility
-  const [showModal, setShowModal] = useState<boolean>(false); // modal visibility
-  const [modalMessage, setModalMessage] = useState<JSX.Element | string>(""); // modal message content
+  const [podcastContent, setPodcastContent] = useState<JSX.Element | JSX.Element[] | null>(null);
+  const [showPodcast, setShowPodcast] = useState<boolean>(false);
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [modalMessage, setModalMessage] = useState<JSX.Element | string>("");
 
-  const handleStart = async (data: PodcastData) => {
-    console.log("Podcast data received:", data);
-
-    // Check if more than 2 participants are selected
-    if ((data.participants.guests.length + data.participants.hosts.length) > 2) {
-      setModalMessage(
-        <>
-          <h2 className="modal-header">Creative Premium Required</h2>
-          <p>You need a <b>creative premium</b> plan to have group talks!<br/>Join us at the minimum cost to support our project and use all the features.</p>
-        </>
-      );
-      setShowModal(true);
-      return;
-    }
-
-    // Invalid Selection: Check if no participants or fewer than 2 are selected
-    if (!data.participants || data.participants.hosts.length < 1 || (data.participants.guests.length + data.participants.hosts.length ) < 2) {
-      console.warn("No participants selected. Showing sample messages.");
-      setModalMessage(
-        <>
-          <h2 className="modal-header">Invalid Selection (OK)</h2>
-          <p>You usually need 2 people to have a conversation😅 <br></br>We're showing you a sample conversation that came from the app</p>
-        </>
-      );
-      setShowModal(true);
-
-      // Use MessageDisplay for SAMPLE_MESSAGES
-      const sampleMessages: MessageType[] = SAMPLE_MESSAGES.map((msg, idx) => ({
-        id: `${idx}`,
-        name: msg.name,
-        message: msg.message,
-        thought: '',
-      }));
-      const podcastUi = <MessageDisplay messages={sampleMessages} />;
-      setPodcast(podcastUi);
-      setData(data);
-      setShowPodcast(true); // Show podcast view
-      return;
-    } else {
-      // Fetch the podcast content if the correct number of participants are selected
-      console.log("Fetching podcast content...");
-      const podcastUi = await getPodcast(
-        data.topic, data.participants);
-      setPodcast(podcastUi);
-      setData(data);
-      setShowPodcast(true); // Show podcast view
-    }
+  // Helper function to open the modal with a message
+  const openModal = (message: JSX.Element | string) => {
+    setModalMessage(message);
+    setShowModal(true);
   };
 
-  const handleClosePodcast = () => {
-    setShowPodcast(false); // Hide podcast view when "X" is clicked
+  // Function to render the podcast UI based on the provided data
+  const renderPodcastUI = ({
+    topic,
+    abstract = "",
+    participants,
+    messages,
+  }: PodcastUIProps) => {
+    const podcastUi = (
+      <Podcast topic={topic} abstract={abstract} participants={participants} 
+      onClose={() => setShowPodcast(false)}
+      >
+        {messages}
+      </Podcast>
+    );
+    setPodcastContent(podcastUi);
+    setShowPodcast(true);
+  };
+
+  // Function to handle invalid selection and show the sample podcast
+  const handleInvalidSelection = () => {
+    const sampleMessages = convertDialoguesToMessages(SAMPLE_PODCAST.dialogues);
+    openModal(
+      <>
+        <h2 className="modal-header">Invalid Selection (OK!)</h2>
+        <p> You usually need 2 people to have a conversation 😅 <br /> We're showing you a sample conversation from the app. </p>
+      </>
+    );
+    renderPodcastUI({
+      topic:SAMPLE_PODCAST.topic, 
+      participants: SAMPLE_PODCAST.participants, 
+      messages: <MessageDisplay messages={sampleMessages} />
+    });
+  };
+
+  // Main function to handle starting the podcast
+  const handleStart = async (data: PodcastRequestData) => {
+    const totalParticipants = data.participants.length;
+
+    // Condition 1: More than 2 participants (premium required)
+    if (totalParticipants > 2) {
+      openModal(
+        <>
+          <h2 className="modal-header">Creative Premium Required</h2>
+          <p>
+            You need a <b>creative premium</b> plan to have group talks!<br />
+            Join us at the minimum cost to support our project and use all the features.
+          </p>
+        </>
+      );
+      return;
+    }
+
+    // Condition 2: Invalid selection, use SAMPLE_PODCAST
+    if (!data.participants || totalParticipants < 2) {
+      handleInvalidSelection();
+      return;
+    }
+
+    // Condition 3: Valid selection, fetch podcast content
+    console.log("Fetching podcast messages with podcast data: ", data);
+    const podcastUi = await getPodcast(data);
+    setPodcastContent(podcastUi);
+    setShowPodcast(true);
   };
 
   return (
@@ -76,15 +95,7 @@ export default function Home() {
       {!showPodcast && <Landing onStart={handleStart} />}
 
       {/* Render the podcast view if showPodcast is true */}
-      {showPodcast && data && (
-        <Podcast
-          topic={data?.topic}
-          speakers={data?.participants.map((p) => p.name)}
-          onClose={handleClosePodcast} // Pass close handler to Podcast component
-        >
-          {podcastContent}
-        </Podcast>
-      )}
+      {showPodcast && podcastContent}
 
       {/* Centralized Modal for conditions */}
       {showModal && (
@@ -92,7 +103,7 @@ export default function Home() {
           <div className="bg-black p-8 rounded-lg text-center">
             {modalMessage}
             <button
-              className="mt-6 bg-purple-500 text-white px-4 py-2 rounded"
+              className="mt-4 px-4 py-2 bg-purple-600 text-white rounded"
               onClick={() => setShowModal(false)}
             >
               Close
