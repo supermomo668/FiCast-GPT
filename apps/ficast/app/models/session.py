@@ -29,8 +29,8 @@ def get_db():
 
 def init_db():
     """Initialize the database schema by creating all tables."""
-    from apps.ficast.app.models.base import Base
-    from apps.ficast.app.models.db import PodcastTask  # Ensure all models are imported here
+    from .base import Base
+    from .db import PodcastTask  # Ensure all models are imported here
     # Debugging print to verify model import
     print("Model imported:", PodcastTask.__tablename__)
     try:

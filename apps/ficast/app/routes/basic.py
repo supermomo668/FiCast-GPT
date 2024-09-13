@@ -1,8 +1,9 @@
 import pathlib, os
 
-from fastapi import APIRouter, Depends
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import APIRouter
+from fastapi.responses import HTMLResponse
 from .homepage import generate_homepage_html
+from ..constants import PRIVATE_POLICY_PATH
 
 router = APIRouter(tags=["base"])
 
@@ -19,8 +20,7 @@ async def ping():
 @router.get("/privacy-policy/", response_class=HTMLResponse)
 async def privacy_policy():
     # Load the privacy policy content from the HTML file
-    policy_path = pathlib.Path(
-        os.getenv("PRIVACY_POLICY_PATH", "app/data/privacy-policy.html"))
+    policy_path = pathlib.Path(PRIVACY_POLICY_PATH)
     if policy_path.exists():
         privacy_policy_content = policy_path.read_text(encoding="utf-8")
     else:

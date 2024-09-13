@@ -4,7 +4,6 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from prometheus_client import Counter
 
-from apps.ficast.app.models.request import PodcastRequest
 from ficast.conversation.podcast import Podcast as FiCastPodcast
 from ficast.character.podcast import Podcaster
 from ficast.assembly.ficast import FiCast
@@ -12,6 +11,7 @@ from ficast.dialogue.speech import DialogueSynthesis
 
 from ..logger import logger, log_error, log_info
 from ..models.db import PodcastTask
+from ..models.request import PodcastRequest
 from ..models.session import ScopedSession, get_db
 from ..models.task_status import TaskStatus, TaskStatusUpdate
 
