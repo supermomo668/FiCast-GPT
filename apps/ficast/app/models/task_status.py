@@ -2,7 +2,7 @@ from enum import Enum
 
 from pydantic import BaseModel
 
-class TaskStatus(Enum):
+class TaskStatus(str, Enum):
     PENDING = "pending"
     STARTED = "started"
     GENERATING_SCRIPT = "generating_script"

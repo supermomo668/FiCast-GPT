@@ -28,7 +28,7 @@ class PodcastTask(Base):
     audio = Column(LargeBinary, nullable=True)  # Stores the audio file as binary data
     error_message = Column(Text, nullable=True)  # New field to store errors
 
-    def __init__(self, task_id: str, script_status: TaskStatus = TaskStatus.PENDING, audio_status: TaskStatus = TaskStatus.PENDING, error_message: str = None):
+    def __init__(self, task_id: str, script_status: str = TaskStatus.PENDING, audio_status: str = TaskStatus.PENDING, error_message: str = None):
         
         self.task_id = task_id
         self.script_status = script_status

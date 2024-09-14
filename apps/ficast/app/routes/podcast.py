@@ -6,13 +6,14 @@ from sqlalchemy.orm import Session
 
 from apps.ficast.app.logger import log_info
 
-from ..models.request import PodcastRequest
+from ..models.request import AudioRequest, PodcastRequest
 from ..models.task_status import TaskStatusUpdate
 from ..models.response import TaskStatusResponse
 
 from ..models.db import PodcastTask, TaskStatus
 from ..models.session import get_db
 
+from ..logger import logger
 from ..tasks.task import Task
 from ..services.wait_for_task import wait_for_task_ready
 from ..services.auth import get_current_user
@@ -39,12 +40,17 @@ async def create_podcast(
 
 
 @router.get("/{task_id}/status", response_model=TaskStatusResponse)
-async def get_podcast_status(task_id: str, streaming: bool = False, db: Session = Depends(get_db), user=Depends(get_current_user)):
+async def get_podcast_status(task_id: str, streaming=True, db: Session = Depends(get_db), user=Depends(get_current_user)):
     podcast_task = db.query(PodcastTask).filter(PodcastTask.task_id == task_id).first()
+    if not podcast_task:
+        raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
     if streaming:
         async def event_stream():
             while True:
-                yield f"data: {json.dumps({'script_status': podcast_task.script_status, 'audio_status': podcast_task.audio_status, 'error': podcast_task.error_message})}\n\n"
+                yield f"""data: {json.dumps({
+                    'script_status': podcast_task.script_status, 
+                    'audio_status': podcast_task.audio_status, 
+                    'error': podcast_task.error_message})}\n\n"""
                 await asyncio.sleep(1)  # Adjust the interval as needed
 
         return StreamingResponse(event_stream(), media_type="text/event-stream")
@@ -74,11 +80,12 @@ async def get_podcast_script(task_id: str, db: Session = Depends(get_db), user=D
         handle_task_exceptions(e)
 
 
-@router.post("/{task_id}/audio", response_model=TaskStatusUpdate)
-async def create_podcast_audio(task_id: str, db: Session = Depends(get_db), user=Depends(get_current_user)):
+@router.post("/audio", response_model=TaskStatusUpdate)
+async def create_podcast_audio(request: AudioRequest, db: Session = Depends(get_db), user=Depends(get_current_user)):
+    logger.info(f"Creating podcast audio for user with request: {request}")
     try:
         # Fetch the existing podcast task using the db session
-        podcast_task = db.query(PodcastTask).filter(PodcastTask.task_id == task_id).first()
+        podcast_task = db.query(PodcastTask).filter(PodcastTask.task_id == request.task_id).first()
         
         if not podcast_task:
             raise HTTPException(status_code=404, detail="Podcast task not found")
@@ -87,7 +94,7 @@ async def create_podcast_audio(task_id: str, db: Session = Depends(get_db), user
             raise HTTPException(status_code=400, detail="Script must be generated before audio can be created")
 
         # Now generate the audio using the existing task and session
-        task = Task(db=db, task_id=task_id)  # Reuse the existing task_id
+        task = Task(db=db, task_id=request.task_id)  # Reuse the existing task_id
         task_msg: TaskStatusUpdate = task.generate_audio()
         return TaskStatusUpdate(**task_msg.model_dump())
     

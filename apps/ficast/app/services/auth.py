@@ -47,7 +47,9 @@ def verify_user(username: str, password: str) -> bool:
 
 def create_access_token(
     username: str, 
-    access_level: AccessLevelEnum = AccessLevelEnum.FREEMIUM, expires_delta: Optional[timedelta] = None
+    access_level: AccessLevelEnum = AccessLevelEnum.FREEMIUM, 
+    expires_delta: Optional[timedelta] = None,
+    auth_type: TokenSourceModel =TokenSourceModel.BEARER
 ) -> str:
     # Get default access level settings
     if not expires_delta:
@@ -57,11 +59,12 @@ def create_access_token(
         sub=username,
         exp=datetime.now(timezone.utc) + expires_delta,
         access_level=access_level,
-        auth_type=TokenSourceModel.BEARER
+        auth_type=auth_type
     )
     # Return the encoded token
     return jwt.encode(
-        to_encode.model_dump(), JWT_SECRET_KEY, algorithm=JWT_ALGORITHM
+        to_encode.model_dump(), 
+        JWT_SECRET_KEY, algorithm=JWT_ALGORITHM
     )
 
 def decode_jwt_token(token: str) -> TokenEncodingModel:
@@ -69,13 +72,21 @@ def decode_jwt_token(token: str) -> TokenEncodingModel:
         payload = jwt.decode(
             token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM]
         )
-        return TokenEncodingModel(**payload)
+        logger.debug(f"Decoded JWT payload: {payload}")
+        payload = TokenEncodingModel(**payload)
+        if hasattr(payload, "auth_type") and payload.auth_type == TokenSourceModel.BEARER:
+            return payload
+        else:
+            # Likely a firebase token
+            raise HTTPException(status_code=401, detail="Invalid token. Not an internal auth token. ")
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token has expired")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
 def get_bearer_token(authorization: str = Header(...)) -> str:
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Authorization header is missing")
     if not authorization.lower().startswith(TokenSourceModel.BEARER):
         raise HTTPException(
             status_code=401, 
@@ -132,39 +143,26 @@ def basic_authentication(auth_header: str) -> UserAuthenticationResponse:
     )
 
 def bearer_authentication(authorization: str) -> UserAuthenticationResponse:
-    """
-    Authenticate using either a JWT token issued by our system or a Firebase token.
-
-    If the token is a JWT issued by our system, the response will contain the username and authentication type will be "api_key". If the token is a Firebase token, the
-    response will contain the username and authentication type will be "firebase".
-    Args:
-        authorization: The Authorization header containing the token
-    Returns:
-        A dictionary with keys "auth" and "user"
-    Raises:
-        HTTPException: If the token is invalid or of unknown type
-    """
     scheme, _, token = authorization.partition(" ")
+    logger.info(f"Scheme: {scheme}, token: {token[:5]}...")
     if scheme.lower() != TokenSourceModel.BEARER:
         raise HTTPException(status_code=401, detail="Invalid authentication scheme")
     logger.info(f"Authenticating using scheme: {scheme}")
     try:
         logger.info(f"Using JWT authentication")
-        # Try to decode as a JWT token issued by our system
         token_info: TokenEncodingModel = decode_jwt_token(token)
+        # Check if JWT is issued by our system
         if token_info.auth_type == TokenSourceModel.BEARER:
-            # JWT issued by our system
-            username = token_info.sub
-            if username is None:
-                raise HTTPException(
-                    status_code=401, detail="Invalid JWT token")
             return UserAuthenticationResponse(
-                username=username, auth_type=TokenSourceModel.BEARER)
+                username=token_info.sub, auth_type=TokenSourceModel.BEARER
+            )
         else:
-            raise HTTPException(
-                status_code=401, detail="Unknown token type")
-    except jwt.PyJWTError:
-        # If decoding as JWT fails, attempt Firebase verification
-        return firebase_token_authentication(token)
-
-    
+            logger.info(f"Using Firebase Authentication")
+            # Check for Firebase tokens
+            return firebase_token_authentication(token)
+    except jwt.PyJWTError as e:
+        logger.error(f"JWT decoding error: {str(e)}")
+        raise HTTPException(status_code=401, detail="Invalid JWT token")
+    except Exception as e:
+        logger.error(f"Unknown token authentication error: {str(e)}")
+        raise HTTPException(status_code=401, detail="Unknown token authentication error")

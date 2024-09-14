@@ -97,5 +97,5 @@ class UserAuthenticationResponse(BaseModel):
 class TokenEncodingModel(BaseModel):
     sub: str
     exp: Optional[datetime] = None
-    access_level: AccessLevelEnum
-    auth_type: TokenSourceModel = TokenSourceModel.BEARER
+    access_level: Optional[AccessLevelEnum] = None
+    auth_type: Optional[TokenSourceModel] = None

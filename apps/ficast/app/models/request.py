@@ -12,6 +12,9 @@ class PodcastRequest(BaseModel):
     n_rounds: int
     participants: list[Participant]
 
+class AudioRequest(BaseModel):
+    task_id: str
+    
 class Token(BaseModel):
     access_token: str
     token_type: str

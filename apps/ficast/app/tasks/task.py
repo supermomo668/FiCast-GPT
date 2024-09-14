@@ -1,3 +1,4 @@
+from operator import is_
 import json, uuid, os
 from celery import shared_task
 from fastapi import HTTPException
@@ -85,11 +86,12 @@ class Task:
                 raise ValueError("Podcast task not found")
 
             if podcast_task.script_status != TaskStatus.SCRIPT_CREATED or not podcast_task.script:
-                raise ValueError("Script must be successfully generated before audio can be created")
+                raise ValueError("Script must be successfully generated before audio can be created and `script_status` must be `SCRIPT_CREATED`")
 
             # Update task status to GENERATING_AUDIO
             self._update_task_status(
-                self.task_id, TaskStatus.GENERATING_AUDIO, is_audio=True
+                self.task_id, 
+                TaskStatus.STARTED, is_audio=True
             )
 
             if USE_CELERY:
@@ -107,7 +109,10 @@ class Task:
             )
 
         except Exception as e:
-            self._save_error(f"Failed to enqueue audio task: {str(e)}")
+            self._save_error(
+                f"Failed to enqueue audio task: {str(e)}",
+                is_audio=True
+            )
             raise HTTPException(status_code=500, detail="Failed to enqueue audio task")
 
     def _execute_create_podcast_task(
@@ -167,7 +172,10 @@ class Task:
     def _execute_generate_audio_task(self) -> None:
         local_session = ScopedSession()
         try:
-            self._update_task_status(self.task_id, TaskStatus.GENERATING_AUDIO, is_audio=True, session=local_session)
+            self._update_task_status(
+                self.task_id, 
+                TaskStatus.GENERATING_AUDIO, 
+                is_audio=True, session=local_session)
 
             podcast_task = local_session.query(PodcastTask).filter(
                 PodcastTask.task_id == self.task_id).first()
@@ -193,7 +201,9 @@ class Task:
 
         except Exception as e:
             log_error(f"Failed to generate audio: {e}")
-            self._save_error(f"Failed to generate audio: {str(e)}", session=local_session)
+            self._save_error(
+                f"Failed to generate audio: {str(e)}", session=local_session, is_audio=True
+            )
             local_session.rollback()
             raise  # Reraise the exception to allow Celery to handle it properly
         finally:
@@ -201,7 +211,7 @@ class Task:
 
     def _save_error(
         self, 
-        error_message: str, session: Session = None
+        error_message: str, session: Session = None, is_audio: bool = False
         ) -> None:
         if session is None:
             session = self.db
@@ -211,8 +221,10 @@ class Task:
                 log_error(f"Task {self.task_id} not found while trying to save error: {error_message}")
                 return
             task.error_message = error_message
-            task.script_status = TaskStatus.FAILURE
-            task.audio_status = TaskStatus.FAILURE
+            if is_audio:
+                task.audio_status = TaskStatus.FAILURE
+            else:
+                task.script_status = TaskStatus.FAILURE
             session.commit()
         except Exception as e:
             log_error(f"Failed to save error to task {self.task_id}: {e}")
