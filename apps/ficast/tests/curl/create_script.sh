@@ -8,13 +8,13 @@ response=$(curl -X POST "http://127.0.0.1:42110/podcast/create" \
       {
         "name": "Joe Rogan",
         "description": "Joe Rogan is a funny and popular podcast host",
-        "model": "gpt-3.5-turbo",
+        "model": "gemini-1.5-pro",
         "role": "host"
       },
       {
-        "name": "Obi Wan",
-        "description": "Obi Wan is a star wars character who upholds justice",
-        "model": "gpt-3.5-turbo"
+        "name": "Darth Vader",
+        "description": "Sith Lord in Star Wars Universe",
+        "model": null
       }
     ]
   }' \

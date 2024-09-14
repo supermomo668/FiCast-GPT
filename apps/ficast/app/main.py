@@ -5,7 +5,7 @@ import dotenv, os
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 
-dotenv.load_dotenv(".env", override=True)
+dotenv.load_dotenv(".env")
 
 from .routes import podcast, auth, basic, samples
 from .models.session import init_db

@@ -1,1 +1,2 @@
-celery -A app.tasks.task.celery_app "$@"
+#!/bin/bash
+celery -A app.tasks.task "$@"
