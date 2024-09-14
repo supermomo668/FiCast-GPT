@@ -8,7 +8,7 @@ llm_config:
   config_list_path: "../../conf/OAI_CONFIG_LIST.txt"
 
 podcast_config:
-  topic: "Democracy"
+  topic: "<An Interesting Topic>"
   n_rounds: ${conversation_config.n_rounds}  # Inherit from base.yaml
   length: 10
   character_cfg:

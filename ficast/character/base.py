@@ -48,11 +48,8 @@ class Character(Person):
     """
     cfg: ConversationConfig = load_podcast_config()
     system_message: str = "As yourself: {name}, respond to the conversation."
-    name: str
     role: str
-    description: str
     model: str
-    gender: str = None
     class Config:
         arbitrary_types_allowed = True
     def __init__(
@@ -61,11 +58,13 @@ class Character(Person):
         description: str = "",
         role: str = "participant",
         model: str = "gemini-1.5-pro",
-        gender: str = None,
+        sex: str = None,
         system_message: str = "As yourself: {name}, respond to the conversation.",
         ):
         super().__init__(
-            name=name, description=description, role=role, model=model
+            name=name, 
+            description=description, 
+            role=role, model=model
         )
         self.cfg = load_podcast_config()
         self.system_message = system_message.format_map({"name": name})

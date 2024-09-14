@@ -36,7 +36,7 @@ class ConvCast(BaseModel):
         "protected_namespaces": (),  # Avoid conflict with 'model_'
     }
     
-    def __init__(self, conversation: "Conversation", **kwargs: Any):
+    def __init__(self, conversation: Conversation, **kwargs: Any):
         super().__init__(**kwargs)
         self.conversation = conversation
 

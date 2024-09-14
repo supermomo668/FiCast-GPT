@@ -1,19 +1,21 @@
 "use server";
 
+import { FicastAPIClient } from '@/lib/ficast_client';
+
 import { MessageEntryUI } from "@/app/models/messages";
-import { FiCastAPIResponse, PodcastRequestData } from "@/app/models/api_entry";
+import { FiCastAPIResponse, PodcastRequestData, TaskCreateResponse, TaskStatusResponse } from "@/app/models/api_entry";
 import { convertDialoguesToMessages } from "@/app/utils/messageConverter"; // Import the utility function
-import { Participant } from "../models/participants";
 
-const BACKEND_ACCESS_TOKEN = process.env.NEXT_PUBLIC_BACKEND_ACCESS_TOKEN;
-
-export async function fetchPodcastScript({
-  topic, n_rounds = 10, participants}: PodcastRequestData
-  ): Promise<FiCastAPIResponse> {
-  console.log("Sending podcast create request...");
+export async function createPodcastScript({
+  topic,
+  n_rounds = 10,
+  participants,
+}: PodcastRequestData): Promise<{ task_id: string }> {
+  console.log('Sending podcast create request...');
+  
   const requestBody: PodcastRequestData = {
     topic: topic,
-    n_rounds: n_rounds, 
+    n_rounds: n_rounds,
     participants: participants.map((speaker) => ({
       name: speaker.name,
       description: speaker.description,
@@ -21,37 +23,64 @@ export async function fetchPodcastScript({
       role: speaker.role,
     })),
   };
-  const podcastCreateResponse = await fetch(
-    `${process.env.NEXT_PUBLIC_BACKEND_URL}/podcast/create`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.BACKEND_ACCESS_TOKEN}`,
-      },
-      body: JSON.stringify(requestBody),
-    }
-  );
-  const data: FiCastAPIResponse = await podcastCreateResponse.json();
-  return data;
-}
-// In backend_message.tsx
 
-export async function getMessagesNewBackend(
-  speakers: Participant[],
-  n_rounds: number=10,
-  topic: string,
-  onMessageChanges: (messages: MessageEntryUI[]) => void
+  try {
+    // Post request to create a podcast
+    const podcastCreateResponse = await FicastAPIClient.post<TaskCreateResponse>('/podcast/create', requestBody);
+    // Extract task ID from response
+    const createData: TaskCreateResponse = podcastCreateResponse.data;
+    const taskId = createData.task_id;
+    console.log('Received Task ID:', taskId);
+    return { task_id: taskId };
+  } catch (error) {
+    console.error('Error creating podcast task:', error);
+    throw error;
+  }
+}
+
+// Function to check the status of the task until it's completed
+export async function waitTaskComplete(taskId: string): Promise<TaskStatusResponse> {
+  let isCompleted = false;
+  let statusResponse: TaskStatusResponse | null = null;
+  try {
+    // Keep polling until the task is complete (SCRIPT_CREATED)
+    while (!isCompleted) {
+      const response = await FicastAPIClient.get<TaskStatusResponse>(`/podcast/${taskId}/status`);
+      statusResponse = response.data;
+      console.log('Polling task status:', response.data);
+      if (!statusResponse) {
+        console.error('Error: statusResponse is null or undefined');
+        throw new Error('statusResponse is null or undefined');
+      }
+
+      // Add a return statement here
+      if (statusResponse.script_status.toLowerCase() === 'script_created') {
+        isCompleted = true;
+        return statusResponse;
+      } else {
+        // Wait for 2 seconds before polling again
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      }
+    }
+  } catch (error) {
+    console.error('Error polling task status:', error);
+    throw error;
+  }
+  return statusResponse as TaskStatusResponse;
+}
+
+export async function getMessagesNewBackend({
+  topic, participants, n_rounds=10}: PodcastRequestData, setLoading: (loading: boolean) => void
 ): Promise<MessageEntryUI[]> {
   const podcast_request: PodcastRequestData = {
-    topic: topic,
-    n_rounds: n_rounds,
-    participants: speakers,
+    topic: topic, n_rounds: n_rounds, participants: participants,
   }
-  const data: FiCastAPIResponse = await fetchPodcastScript(podcast_request);
-  console.log("getMessagesNewBackend: Data received from fetchPodcastScript:", data);
-
-  const messages: MessageEntryUI[] = convertDialoguesToMessages(data.dialogues);
+  const task = await createPodcastScript(podcast_request);
+  console.log("getMessagesNewBackend: Data received from fetchPodcastScript:", task.task_id);
+  const status_update = await waitTaskComplete(task.task_id);
+  // Fetch the final script data when completed
+  const finalResponse = await FicastAPIClient.get<FiCastAPIResponse>(`/podcast/${task.task_id}/script`);
+  const messages: MessageEntryUI[] = convertDialoguesToMessages(finalResponse.data.dialogues);
   console.log("getMessagesNewBackend: Converted messages:", messages);
 
   return messages;

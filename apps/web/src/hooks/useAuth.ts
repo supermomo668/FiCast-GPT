@@ -1,8 +1,8 @@
-// src/hooks/useAuth.ts
 import { useEffect, useState } from 'react';
 import { auth, provider } from '@/lib/firebase';
 import { signInWithPopup, signOut as firebaseSignOut, onAuthStateChanged } from 'firebase/auth';
-import axios from 'axios';
+import { FicastAPIClient } from '@/lib/ficast_client'; // Import your Axios client
+import { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 export const useAuth = () => {
   const [user, setUser] = useState<any>(null);
@@ -19,21 +19,26 @@ export const useAuth = () => {
         console.log('Token obtained:', token);
         setAuthToken(token);
 
+        // Dynamically inject the token into FicastAPIClient headers
+        FicastAPIClient.interceptors.request.use(
+          (config: InternalAxiosRequestConfig<any>) => {
+            config.headers.Authorization = `Bearer ${authToken}`;
+            return config;
+          },
+          (error: AxiosError) => Promise.reject(error)
+        );
+
+        // Make API request to verify authentication
         try {
-          const response = await axios.get(
-            `${process.env.NEXT_PUBLIC_BACKEND_AUTH_URL}/check`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
+          const response = await FicastAPIClient.get('/check');
           console.log('Auth response:', response.data);
           setAuthResponse(response.data.message || 'Authentication successful!');
           setUser(currentUser);
         } catch (error) {
           console.error('Error during authentication:', (error as Error).message);
-          setAuthResponse('Authentication failed. Error: ' + (error as Error).message + ' with the endpoint: ' + `${process.env.NEXT_PUBLIC_BACKEND_AUTH_URL}/check`);
+          setAuthResponse(
+            'Authentication failed. Error: ' + (error as Error).message + ' with the endpoint: /check'
+          );
           setUser(null);
         }
       } else {
@@ -47,15 +52,18 @@ export const useAuth = () => {
     return () => unsubscribe();
   }, []);
 
+  // Google Sign-in using Firebase Popup
   const signIn = async () => {
     try {
-      console.log("Authenticating with Google...");
+      console.log('Authenticating with Google...');
       const result = await signInWithPopup(auth, provider);
+      // Handle post-authentication logic here if needed
     } catch (error) {
       console.error('Error during sign-in:', (error as Error).message);
     }
   };
 
+  // Google Sign-out using Firebase
   const signOut = async () => {
     try {
       await firebaseSignOut(auth);

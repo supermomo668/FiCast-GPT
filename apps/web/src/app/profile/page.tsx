@@ -1,9 +1,10 @@
-"use client";
+'use client';
 
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import { FicastAuthClient } from '@/lib/ficast_client'; // Import your Axios client
+import { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
 
 const Profile = () => {
   const { user, authToken, loading, signOut } = useAuth();
@@ -15,6 +16,7 @@ const Profile = () => {
   const [unauthorized, setUnauthorized] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
+  // Handle redirection if unauthorized
   useEffect(() => {
     if (!loading && !user) {
       setUnauthorized(true);
@@ -22,34 +24,37 @@ const Profile = () => {
     }
   }, [loading, user, router]);
 
+  // Axios interceptor to dynamically inject the auth token into each request
+  useEffect(() => {
+    if (authToken) {
+      FicastAuthClient.interceptors.request.use(
+        (config: InternalAxiosRequestConfig<any>) => {
+          config.headers.Authorization = `Bearer ${authToken}`;
+          return config;
+        },
+        (error: AxiosError) => Promise.reject(error)
+      );
+    }
+  }, [authToken]);
+
+  // Generate API Key
   const generateApiKey = async () => {
     try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_AUTH_URL}/issue-api-token`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
+      const response = await FicastAuthClient.post('/issue-api-token');
       setApiKey(response.data.api_token);
     } catch (error) {
       console.error('Error issuing API key:', error);
     }
   };
 
+  // Test API Key Request
   const testApiKeyRequest = async () => {
     try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_AUTH_URL}/test-api-token`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${testApiKey}`,
-          },
-        }
-      );
+      const response = await FicastAuthClient.post('/test-api-token', {}, {
+        headers: {
+          Authorization: `Bearer ${testApiKey}`, // Use the key being tested
+        },
+      });
       setTestResponse(JSON.stringify(response.data, null, 2));
       setShowModal(true);
     } catch (error) {

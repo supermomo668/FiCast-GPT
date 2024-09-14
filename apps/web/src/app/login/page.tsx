@@ -3,19 +3,17 @@
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import Image from 'next/image'; // Import for the Google icon
-import GoogleButton from 'react-google-button'
+import GoogleButton from 'react-google-button';
 
 const Login = () => {
   const { user, authResponse, loading, signIn } = useAuth();
   const router = useRouter();
   const [showModal, setShowModal] = useState(false);
 
-  // Log the login page render for debugging
   // Redirect to profile if user is authenticated
   useEffect(() => {
     if (!loading && user) {
-      console.log('User authenticated, redirecting to profile...'); // Log before redirection
+      console.log('User authenticated, redirecting to profile...');
       router.push('/profile');
     }
   }, [user, loading, router]);
@@ -27,12 +25,23 @@ const Login = () => {
     }
   }, [authResponse]);
 
+  // Handle Google sign-in immediately on button click
+  const handleGoogleSignIn = async () => {
+    try {
+      await signIn(); // Make sure signIn is synchronous
+    } catch (error) {
+      console.error('Error during Google sign-in:', error);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-slate-900 text-white">
       <h1 className="text-3xl mb-6">Login to FiCast</h1>
 
-      {/* Standard Google Sign-In Button */}
-      <GoogleButton onClick={signIn} />
+      {/* Google Sign-In Button */}
+      <GoogleButton
+        onClick={handleGoogleSignIn} // Trigger sign-in immediately on click
+      />
 
       {/* Authentication Status Modal */}
       {showModal && (

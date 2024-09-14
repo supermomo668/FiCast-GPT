@@ -4,7 +4,7 @@ defaults:
   - speech: default
   - _self_
 podcast_config:
-  topic: "Democracy"
+  topic: "<An Interesting Topic>"
   n_rounds: ${conversation_config.n_rounds}  # Inherit from base.yaml
   length: 10
   character_cfg:

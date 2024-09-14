@@ -1,10 +1,10 @@
 "use server";
 
-import { MessageEntryUI, MessageUI } from "./models/messages";
-import { FiCastAPIResponse } from "./models/api_entry";
+import { MessageEntryUI, MessageUI } from "../models/messages";
+import { FiCastAPIResponse } from "../models/api_entry";
 
 
-export async function getMessagesNewBackend(
+export async function getSampleMessagesBackend(
   speakers: string[],
   topic: string,
   onMessageChanges: (messages: MessageUI[]) => void
@@ -16,7 +16,7 @@ export async function getMessagesNewBackend(
   }
 
   const resp = await fetch(
-    `${process.env.NEXT_PUBLIC_BACKEND_URL}/samples/script`,
+    `${process.env.FICAST_URL}/samples/script`,
     {method: 'GET'},
   );
 

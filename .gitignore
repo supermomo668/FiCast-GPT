@@ -4,6 +4,9 @@ gpt-microservices-firebase-adminsdk-nfelm-c5e2e0d182.json
 ## dockr Data
 data/
 
+# sqlite db
+*.db
+
 ## hydra logs
 outputs/
 

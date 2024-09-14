@@ -19,3 +19,14 @@ export interface FiCastAPIResponse {
   abstract: string;
   dialogues: Dialogues;
 }
+
+export interface TaskCreateResponse {
+  task_id: string;
+  status: string;
+}
+
+export interface TaskStatusResponse {
+  script_status: string;
+  audio_status: string;
+  error: string | null;
+}

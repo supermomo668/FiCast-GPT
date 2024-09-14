@@ -1,0 +1,25 @@
+# Use an official Python base image
+FROM python:3.11-slim
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy the necessary files into the container
+COPY ../apps/ficast /app/
+COPY ../pyproject.toml ../poetry.lock /app/
+COPY ../ficast /app/ficast/
+
+# Install Poetry
+RUN pip install poetry==1.8.3
+
+# Install the dependencies specified in pyproject.toml, including the "api" group
+RUN poetry install --no-interaction --no-ansi --with api
+
+# Make sure the entrypoint script is executable
+RUN chmod +x /app/scripts/api-entrypoint.sh /app/scripts/celery-entrypoint.sh
+
+# Set the entrypoint to the entrypoint script
+ENTRYPOINT ["/app/scripts/api-entrypoint.sh"]
+
+# Set the default command to start the FastAPI app
+CMD ["--host", "0.0.0.0", "--port", "8000"]
