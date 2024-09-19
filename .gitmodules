@@ -4,3 +4,6 @@
 [submodule "apps/youtube/api-samples"]
 	path = apps/youtube/api-samples
 	url = git@github.com:youtube/api-samples.git
+[submodule "apps/web"]
+	path = apps/web
+	url = https://github.com/supermomo668/FiCast-Frontend.git
