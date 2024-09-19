@@ -3,8 +3,8 @@ from pydantic import BaseModel
 
 class Participant(BaseModel):
     name: str
-    description: str
-    model: str
+    description: Optional[str] = None
+    model: Optional[str] = None
     role: Optional[str] = None
 
 class PodcastRequest(BaseModel):
@@ -12,6 +12,9 @@ class PodcastRequest(BaseModel):
     n_rounds: int
     participants: list[Participant]
 
+class TaskRequest(BaseModel):
+    task_id: str
+    
 class Token(BaseModel):
     access_token: str
     token_type: str

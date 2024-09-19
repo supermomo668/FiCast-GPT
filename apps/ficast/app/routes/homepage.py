@@ -1,4 +1,5 @@
 import html
+from ..constants import API_DOC, API_REDOC, APP_ROOT
 
 def generate_curl_example(description: str, command: str) -> str:
     # Escape special HTML characters to ensure correct rendering
@@ -11,85 +12,85 @@ def generate_curl_example(description: str, command: str) -> str:
     """
 
 def generate_homepage_html() -> str:
-    html_content = """
+    html_content = f"""
     <html lang="en">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>FiCast-TTS API Documentation</title>
             <style>
-                body {{
+                body {{{{
                     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
                     background-color: #f8f9fa;
                     color: #343a40;
                     margin: 0;
                     padding: 0;
-                }}
-                .container {{
+                }}}}
+                .container {{{{
                     width: 90%;
                     max-width: 1200px;
                     margin: 0 auto;
                     padding: 40px 20px;
-                }}
-                h1, h2, h3 {{
+                }}}}
+                h1, h2, h3 {{{{
                     color: #495057;
-                }}
-                h1 {{
+                }}}}
+                h1 {{{{
                     font-size: 2.5em;
                     margin-bottom: 0.5em;
-                }}
-                h2 {{
+                }}}}
+                h2 {{{{
                     font-size: 1.8em;
                     margin-bottom: 0.5em;
                     border-bottom: 2px solid #ced4da;
                     padding-bottom: 0.2em;
-                }}
-                h3 {{
+                }}}}
+                h3 {{{{
                     font-size: 1.5em;
                     margin-top: 1.5em;
-                }}
-                p {{
+                }}}}
+                p {{{{
                     font-size: 1.2em;
                     line-height: 1.6;
-                }}
-                a {{
+                }}}}
+                a {{{{
                     color: #007bff;
                     text-decoration: none;
-                }}
-                a:hover {{
+                }}}}
+                a:hover {{{{
                     text-decoration: underline;
-                }}
-                pre {{
+                }}}}
+                pre {{{{
                     background-color: #e9ecef;
                     padding: 15px;
                     border-radius: 8px;
                     overflow-x: auto;
                     font-size: 1em;
-                }}
-                code {{
+                }}}}
+                code {{{{
                     font-family: 'Courier New', Courier, monospace;
                     font-size: 0.95em;
-                }}
-                .curl-example {{
+                }}}}
+                .curl-example {{{{
                     margin-bottom: 20px;
-                }}
-                .header {{
+                }}}}
+                .header {{{{
                     background-color: #343a40;
                     color: #fff;
                     padding: 20px 0;
                     text-align: center;
-                }}
-                .header h1 {{
+                }}}}
+                .header h1 {{{{
                     margin: 0;
                     font-size: 3em;
-                }}
-                .footer {{
+                }}}}
+                .footer {{{{
                     text-align: center;
                     padding: 20px 0;
                     margin-top: 40px;
                     background-color: #343a40;
                     color: #fff;
-                }}
+                }}}}
             </style>
         </head>
         <body>
@@ -99,7 +100,8 @@ def generate_homepage_html() -> str:
             </div>
             <div class="container">
                 <h2>Explore the API Documentation</h2>
-                <p>Visit the full self-generated API documentation at <a href="/docs">/docs</a>.</p>
+                <p><a href="{API_DOC}">Try-it-yourself API documentation</a>.</p>
+                <p><a href="{API_REDOC}">Redoc API documentation</a>.</p>
                 <h2>How to Use the FiCast-TTS API</h2>
     """
 
@@ -145,7 +147,8 @@ def generate_homepage_html() -> str:
     -H "Authorization: Bearer ${ACCESS_TOKEN}") <br>
     echo $response'''
                 )
-
+    html_content += """
+        <p><b>Note:</b> A schema-consistent JSON script created from the application is available at <a href="/samples/script">/samples/script</a>. However, more script formats is available by changing the input parameter `format`.</p>"""
     html_content += generate_curl_example(
                     "Retrieve Generated Audio",
                     '''response=$(curl -X GET "<this_url>/podcast/$TASK_ID/audio" \\
@@ -154,6 +157,17 @@ def generate_homepage_html() -> str:
     -o data/curl-task-result.wav) <br>
     echo data/curl-task-result.wav'''
                 )
+
+    # Adding the new Event Source endpoint example
+    html_content += generate_curl_example(
+                    "Stream Task Progress (Script or Audio)",
+                    '''curl -N "<this_url>/podcast/$TASK_ID/progress?event_type=script" \\
+    -H "Content-Type: application/json" \\
+    -H "Authorization: Bearer ${ACCESS_TOKEN}"'''
+                )
+
+    html_content += """
+        <p><b>Note:</b> You can stream task progress for both script and audio by changing the <code>event_type</code> parameter in the URL. The event_type can either be <code>script</code> or <code>audio</code>.</p>"""
 
     html_content += """
             </div>
