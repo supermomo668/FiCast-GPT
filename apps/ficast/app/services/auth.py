@@ -72,7 +72,6 @@ def decode_jwt_token(token: str) -> TokenEncodingModel:
         payload = jwt.decode(
             token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM]
         )
-        logger.debug(f"Decoded JWT payload: {payload}")
         payload = TokenEncodingModel(**payload)
         if hasattr(payload, "auth_type") and payload.auth_type == TokenSourceModel.BEARER:
             return payload
@@ -149,7 +148,6 @@ def bearer_authentication(authorization: str) -> UserAuthenticationResponse:
         raise HTTPException(status_code=401, detail="Invalid authentication scheme")
     logger.info(f"Authenticating using scheme: {scheme}")
     try:
-        logger.info(f"Using JWT authentication")
         token_info: TokenEncodingModel = decode_jwt_token(token)
         # Check if JWT is issued by our system
         if token_info.auth_type == TokenSourceModel.BEARER:

@@ -157,8 +157,18 @@ def generate_homepage_html() -> str:
     -o data/curl-task-result.wav) <br>
     echo data/curl-task-result.wav'''
                 )
+
+    # Adding the new Event Source endpoint example
+    html_content += generate_curl_example(
+                    "Stream Task Progress (Script or Audio)",
+                    '''curl -N "<this_url>/podcast/$TASK_ID/progress?event_type=script" \\
+    -H "Content-Type: application/json" \\
+    -H "Authorization: Bearer ${ACCESS_TOKEN}"'''
+                )
+
     html_content += """
-        <p><b>Note:</b> An audio podcast generated from the example is available at <a href="/samples/audio">/samples/audio</a>.</p>"""
+        <p><b>Note:</b> You can stream task progress for both script and audio by changing the <code>event_type</code> parameter in the URL. The event_type can either be <code>script</code> or <code>audio</code>.</p>"""
+
     html_content += """
             </div>
             <div class="footer">

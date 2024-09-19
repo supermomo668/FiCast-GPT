@@ -12,7 +12,7 @@ class PodcastRequest(BaseModel):
     n_rounds: int
     participants: list[Participant]
 
-class AudioRequest(BaseModel):
+class TaskRequest(BaseModel):
     task_id: str
     
 class Token(BaseModel):

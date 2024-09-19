@@ -1,30 +1,29 @@
 import asyncio
 import json
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import JSONResponse, StreamingResponse
 from sqlalchemy.orm import Session
 
-from apps.ficast.app.logger import log_info
-
-from ..models.request import AudioRequest, PodcastRequest
-from ..models.task_status import TaskStatusUpdate
-from ..models.response import TaskStatusResponse
+from ..models.request import TaskRequest, PodcastRequest
+from ..models.task_status import TaskProgressRequest, TaskStatusUpdate, TaskStatusResponse, TaskType
 
 from ..models.db import PodcastTask, TaskStatus
 from ..models.session import get_db
 
-from ..logger import logger
+from ..logger import logger, log_info
 from ..tasks.task import Task
 from ..services.wait_for_task import wait_for_task_ready
+from ..services.task_status_stream import task_progress_stream
 from ..services.auth import get_current_user
 from ..utils.error_handler import handle_task_exceptions
 
+STATUS_STREAM_INTERVAL=2
 router = APIRouter(
     prefix="/podcast",
     tags=["podcast"]
 )
 
-@router.post("/create", response_model=TaskStatusUpdate)
+@router.post("/create-script", response_model=TaskStatusUpdate)
 async def create_podcast(
     request: PodcastRequest, 
     db: Session = Depends(get_db), user=Depends(get_current_user)):
@@ -38,39 +37,43 @@ async def create_podcast(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
+@router.post("/stream/progress")
+async def stream_task_progress(
+    request: TaskProgressRequest,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user)
+):
+    """
+    Stream task progress updates (script/audio) as Server-Sent Events (SSE).
 
-@router.get("/{task_id}/status", response_model=TaskStatusResponse)
-async def get_podcast_status(task_id: str, streaming=True, db: Session = Depends(get_db), user=Depends(get_current_user)):
-    podcast_task = db.query(PodcastTask).filter(PodcastTask.task_id == task_id).first()
-    if not podcast_task:
-        raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
-    if streaming:
-        async def event_stream():
-            while True:
-                yield f"""data: {json.dumps({
-                    'script_status': podcast_task.script_status, 
-                    'audio_status': podcast_task.audio_status, 
-                    'error': podcast_task.error_message})}\n\n"""
-                await asyncio.sleep(1)  # Adjust the interval as needed
-
-        return StreamingResponse(event_stream(), media_type="text/event-stream")
-    if streaming:
-        return TaskStatusResponse(
-            script_status=podcast_task.script_status,
-            audio_status=podcast_task.audio_status,
-            error=podcast_task.error_message
-        )
-    return TaskStatusResponse(
-        script_status=podcast_task.script_status,
-        audio_status=podcast_task.audio_status,
-        error=podcast_task.error_message
+    Args:
+        task_id (str): The ID of the task to monitor.
+        event_type (str): The type of event to track ('script' or 'audio').
+    """
+    log_info(f"Streaming task progress: {request}")
+    return StreamingResponse(
+        task_progress_stream(
+            request.task_id, request.event_type, db), 
+        media_type="text/event-stream"
     )
 
-@router.get("/{task_id}/script", response_class=JSONResponse)
-async def get_podcast_script(task_id: str, db: Session = Depends(get_db), user=Depends(get_current_user)):
+@router.post("/status", response_model=TaskStatusResponse)
+async def get_podcast_status(request: TaskProgressRequest, db: Session = Depends(get_db), user=Depends(get_current_user)):
+    podcast_task = db.query(PodcastTask).filter(PodcastTask.task_id == request.task_id).first()
+    if not podcast_task:
+        raise HTTPException(status_code=404, detail=f"Task {request.task_id} not found")
+    status = {
+        "script_status":podcast_task.script_status,
+        "audio_status": podcast_task.audio_status,
+        "error": podcast_task.error_message
+    }
+    return TaskStatusResponse(**status)
+
+@router.post("/script", response_class=JSONResponse)
+async def get_podcast_script(request: TaskRequest, db: Session = Depends(get_db), user=Depends(get_current_user)):
     try:
         # Use the retry mechanism to wait until the script is ready
-        podcast_task = wait_for_task_ready(db, task_id, "script")
+        podcast_task = wait_for_task_ready(db, request.task_id, "script")
         
         return JSONResponse(
             status_code=200,
@@ -80,8 +83,8 @@ async def get_podcast_script(task_id: str, db: Session = Depends(get_db), user=D
         handle_task_exceptions(e)
 
 
-@router.post("/audio", response_model=TaskStatusUpdate)
-async def create_podcast_audio(request: AudioRequest, db: Session = Depends(get_db), user=Depends(get_current_user)):
+@router.post("/create-audio", response_model=TaskStatusUpdate)
+async def create_podcast_audio(request: TaskRequest, db: Session = Depends(get_db), user=Depends(get_current_user)):
     logger.info(f"Creating podcast audio for user with request: {request}")
     try:
         # Fetch the existing podcast task using the db session
@@ -104,11 +107,11 @@ async def create_podcast_audio(request: AudioRequest, db: Session = Depends(get_
         raise HTTPException(
             status_code=500, detail=f"Unexpected error: {str(e)}")
 
-@router.get("/{task_id}/audio", response_class=Response)
-async def get_podcast_audio(task_id: str, db: Session = Depends(get_db), user=Depends(get_current_user)):
+@router.post("/audio", response_class=Response)
+async def get_podcast_audio(request: TaskRequest, db: Session = Depends(get_db), user=Depends(get_current_user)):
     try:
         # Use the retry mechanism to wait until the audio is ready
-        podcast_task = wait_for_task_ready(db, task_id, "audio")
+        podcast_task = wait_for_task_ready(db, request.task_id, "audio")
         if not podcast_task.audio:
             raise HTTPException(status_code=404, detail="Audio not found")
         return Response(

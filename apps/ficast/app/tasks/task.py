@@ -15,8 +15,7 @@ from ..models.db import PodcastTask
 from ..models.request import PodcastRequest
 from ..models.session import ScopedSession, get_db
 from ..models.task_status import TaskStatus, TaskStatusUpdate
-
-USE_CELERY = os.getenv("USE_CELERY", "false").lower() in ("true", "1")
+from ..constants import USE_CELERY
 
 if USE_CELERY:
     from .celery import create_celery

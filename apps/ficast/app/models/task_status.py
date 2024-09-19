@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -30,3 +31,19 @@ class TaskStatus(str, Enum):
 class TaskStatusUpdate(BaseModel):
     task_id: str
     status: TaskStatus
+
+# Response & Request
+
+class TaskType(str, Enum):
+    SCRIPT = "script"
+    AUDIO = "audio"
+    
+class TaskProgressRequest(BaseModel):
+    task_id: str
+    event_type: Optional[TaskType] = None
+    
+class TaskStatusResponse(BaseModel):
+    status : Optional[TaskStatus] = None
+    script_status: Optional[TaskStatus] = None
+    audio_status: Optional[TaskStatus] = None
+    error: Optional[str] = None

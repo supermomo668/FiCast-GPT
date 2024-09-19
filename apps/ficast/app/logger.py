@@ -7,7 +7,8 @@ from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 import traceback
 
-USE_CELERY = os.getenv("USE_CELERY", "false").lower() in ("true", "1")
+from .constants import USE_CELERY
+
 
 # Create the logger object
 logger = logging.getLogger(__name__)

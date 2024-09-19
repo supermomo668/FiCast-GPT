@@ -3,7 +3,7 @@ import pathlib, os
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
 from .homepage import generate_homepage_html
-from ..constants import PRIVATE_POLICY_PATH
+from ..constants import PRIVACY_POLICY_PATH
 
 router = APIRouter(tags=["base"])
 
