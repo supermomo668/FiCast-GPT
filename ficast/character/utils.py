@@ -10,7 +10,10 @@ def get_all_participants(participant_data: Dict[str, str]) -> List[Person]:
     flattened_participants = participant_data["hosts"] + participant_data["guests"]
     return [Person(**participant) for participant in flattened_participants]
 
-def update_existing_character(existing_persons: List[Person], new_persons: List[Person], target_attribute) -> List[Person]:
+def update_existing_character(
+    existing_persons: List[Person], 
+    new_persons: List[Person], 
+    target_attribute: str) -> List[Person]:
     """
     Updates existing persons with information from new persons.
     Args:

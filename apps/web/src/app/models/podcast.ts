@@ -22,9 +22,9 @@ export interface PodcastUIProps extends PodcastBaseDefinition {
 
 // Podcast data with Dialogues
 export type Dialogues = {
-  speaker: Speaker;
+  speaker: string;
   dialogue: string;
-  thought: string;
+  inner_thought: string;
 }[];
 
 export interface PodcastData extends PodcastBaseDefinition {

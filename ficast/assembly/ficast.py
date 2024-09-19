@@ -17,6 +17,8 @@ from ficast.dialogue.speech import DialogueSynthesis
 from ficast.conversation.podcast import Podcast
 from ficast.dialogue.utils import save_bytes_to_wav
 
+from thought_agents.ontology.parser.dialogue import Podcast
+
 from ..character.utils import get_all_participants, update_existing_character
 class FiCast(ConvCast):
     """
@@ -59,7 +61,9 @@ class FiCast(ConvCast):
         if "participants" in json_script:
             json_participants = get_all_participants(json_script['participants'])
             return update_existing_character(
-                self.conversation.participants, json_participants)
+                self.conversation.participants, json_participants,
+                "sex"
+            )
         else:
             return False
 
@@ -81,7 +85,7 @@ class FiCast(ConvCast):
         """
         self.audio_segments = []
         voice_mapping = {}
-        scipt_src = self.conversation.json_script.get("dialogues") if use_json_script else self.conversation.script
+        scipt_src: dict | Podcast = self.conversation.json_script.get("dialogues") if use_json_script else self.conversation.script
         # use script to populate characters sex if not specified
         self.conversation.participants = self._update_participants_sex_from_script(json_script=self.conversation.json_script)
         # Map each participant to a unique voice based on their gender
@@ -91,7 +95,7 @@ class FiCast(ConvCast):
           
         # Iterate through the json_script to process each dialogue
         for entry in tqdm.tqdm(scipt_src, desc="Processing script entries"):
-            speaker_name = entry["speaker"]["name"]
+            speaker_name = entry["speaker"]
             # Get the voice for the speaker
             if speaker_name in voice_mapping:
                 # Synthesize the dialogue text

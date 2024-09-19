@@ -1,4 +1,4 @@
-import { Participant } from "./participants";
+import { Participant, PodcastGroup } from "./participants";
 import { Dialogues } from "./podcast";
 
 // Define the shape of the entry objects returned by the API
@@ -17,6 +17,7 @@ export interface PodcastRequestData{
 export interface FiCastAPIResponse {
   title: string;
   abstract: string;
+  participants: PodcastGroup;
   dialogues: Dialogues;
 }
 
@@ -29,4 +30,9 @@ export interface TaskStatusResponse {
   script_status: string;
   audio_status: string;
   error: string | null;
+}
+
+export interface TaskProgressRequest {
+  task_id: string;
+  event_type: string;
 }

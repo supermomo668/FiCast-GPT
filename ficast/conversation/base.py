@@ -79,7 +79,10 @@ class Conversation:
       participants = [participants]
     for p in participants:
       if p not in self.participants:
-        self.participants.append(p)
+        if p.name not in [p.name for p in self.participants]:
+          self.participants.append(p)
+        else:
+          warnings.warn("Participant name already in conversation. To add a participant, use a unique name. Skipping.")
       
   @property
   def n_participants(self) -> int:

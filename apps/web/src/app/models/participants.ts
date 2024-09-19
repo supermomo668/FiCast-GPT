@@ -1,6 +1,7 @@
 export interface Speaker {
   name: string;
   description?: string | null;
+  sex?: string | null;
 }
 
 export interface Character extends Speaker {

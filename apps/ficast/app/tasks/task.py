@@ -118,6 +118,7 @@ class Task:
         self, podcast_request: PodcastRequest
         ) -> None:
         log_info(f"Opening new session for task {self.task_id}")
+        log_info(f"Execute podcast task with request: {podcast_request}")
         local_session = ScopedSession()
         try:
             # Update task status to indicate script generation has started
