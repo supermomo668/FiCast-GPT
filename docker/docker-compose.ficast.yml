@@ -1,0 +1,42 @@
+services:
+  fastapi:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.ficast 
+    command: --host 0.0.0.0 --port 42110
+    ports:
+      - "${FASTAPI_PORT:-42110}:${FASTAPI_PORT:-42110}"
+    environment:
+      - PYTHONUNBUFFERED=1
+    env_file:
+      - ../apps/ficast/.env
+    depends_on:
+      - redis
+
+  celery_worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.ficast 
+    entrypoint: ["/app/scripts/celery-entrypoint.sh"]
+    command: worker --loglevel=${CELERY_LOGLEVEL:-info} --pool=${CELERY_POOL:-solo}
+    environment:
+      - C_FORCE_ROOT=true
+      - CELERY_BROKER_URL=redis://redis:${REDIS_PORT:-6379}/0
+      - CELERY_RESULT_BACKEND=redis://redis:${REDIS_PORT:-6379}/0
+      - CELERY_CONCURRENCY=${CELERY_CONCURRENCY:-1}
+    env_file:
+      - ../apps/ficast/.env
+    depends_on:
+      - redis
+      - fastapi
+
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    env_file:
+      - ../apps/ficast/.env
+
+networks:
+  default:
+    driver: bridge

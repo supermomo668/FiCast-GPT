@@ -53,7 +53,9 @@ def create_access_token(
 ) -> str:
     # Get default access level settings
     if not expires_delta:
-        expires_delta = AccessLevelModel.get_access_level_info(access_level).token_duration
+        access_level_info = AccessLevelModel.get_access_level_info(access_level)
+        expires_delta = access_level_info.token_duration
+
     # Token payload
     to_encode = TokenEncodingModel(
         sub=username,
@@ -97,7 +99,9 @@ def get_bearer_token(authorization: str = Header(...)) -> str:
 def authenticate_user(username: str, password: str) -> UserAuthenticationResponse:
     if verify_user(username, password):
         return UserAuthenticationResponse(
-            username=username, auth_type=TokenSourceModel.LOGIN)
+            username=username, 
+            auth_source=TokenSourceModel.LOGIN
+        )
     return None
 
 def firebase_token_authentication(
@@ -107,7 +111,7 @@ def firebase_token_authentication(
         decoded_token = auth.verify_id_token(firebase_token)
         return UserAuthenticationResponse(
             username=decoded_token["email"], 
-            auth_type=TokenSourceModel.FIREBASE
+            auth_source=TokenSourceModel.FIREBASE
         )
     except Exception as e:
         raise HTTPException(
@@ -118,6 +122,7 @@ async def get_current_user(
     authorization: Optional[str] = Security(api_key_header)
     ) -> UserAuthenticationResponse:
     # auth_header = request.headers.get("Authorization")
+    
     if authorization:
         if authorization.lower().startswith(TokenSourceModel.LOGIN):
             logger.info("Basic auth header detected")
@@ -126,7 +131,8 @@ async def get_current_user(
             logger.info("Bearer auth header detected")
             return bearer_authentication(authorization)
     raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing or invalid credentials"
+        status_code=status.HTTP_401_UNAUTHORIZED, 
+        detail="Missing or invalid credentials"
     )
 
 def basic_authentication(auth_header: str) -> UserAuthenticationResponse:
@@ -152,7 +158,8 @@ def bearer_authentication(authorization: str) -> UserAuthenticationResponse:
         # Check if JWT is issued by our system
         if token_info.auth_type == TokenSourceModel.BEARER:
             return UserAuthenticationResponse(
-                username=token_info.sub, auth_type=TokenSourceModel.BEARER
+                username=token_info.sub, 
+                auth_type=TokenSourceModel.BEARER,
             )
         else:
             logger.info(f"Using Firebase Authentication")

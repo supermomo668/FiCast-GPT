@@ -1,8 +1,8 @@
+from typing import Optional
 import warnings
 import autogen 
 
-import gender_guesser.detector as gd
-
+from pydantic import Field, field_validator
 from thought_agents.dialogue.utils import termination_msg
 from thought_agents.ontology.parser.dialogue import dialogue_parser
 
@@ -26,30 +26,51 @@ class Podcaster(Character):
     introduce():
         Returns an introduction string for the podcaster.
     """
+    model: Optional[str] = Field(default="gemini-1.5-pro")
+    @field_validator('model')
+    def set_default_model(cls, v):
+        if v is None:
+            return "gemini-1.5-pro"
+        return v
+
     def __init__(
       self, 
       name: str,
-      description: str,
-      model: str = "gemini-1.5-pro",
+      description: Optional[str] = None,
+      model: Optional[str] = Field(default="gemini-1.5-pro"),
       role: str = "guest",
-      gender: str = None,
+      sex: Optional[str] = None,
       system_message: str = "As yourself: {name}, respond to the conversation.",
       ):
+      """
+      Initialize a Podcaster instance.
+      Parameters:
+      -----------
+      name : str
+          Name of the podcaster.
+      description : str, optional
+          Description of the podcaster. Defaults to None.
+      model : str, optional
+          Model name for the podcaster. Defaults to "gemini-1.5-pro".
+      role : str, optional
+          Role of the podcaster. Defaults to "guest".
+      gender : str, optional
+          Gender of the podcaster. Defaults to None.
+      system_message : str, optional
+          System message for the podcaster. Defaults to
+          "As yourself: {name}, respond to the conversation.".
+      """
       super().__init__(
         name=name, 
         description=description, 
         system_message=system_message, 
         model=model, 
         role=role,
-        gender=gender
+        sex=sex
       )
       self.system_message = self.cfg.system_prompts['podcast'][role].format_map({
         "name": name, "parser": dialogue_parser.get_format_instructions()
       })
-      gender_detector = gd.Detector()
-      if self.gender is None:
-        self.gender = gender_detector.get_gender(name.split()[0])
-        warnings.warn(f"Gender not specified for {name}, assigned gender for {name} as {self.gender}")
       
     def __allowed_roles__(self):
       return ["host", "guest"]

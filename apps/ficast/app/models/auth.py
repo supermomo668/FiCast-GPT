@@ -23,7 +23,7 @@ class AccessMaxParticipantModel(Enum):
 class AccessLevelModel(BaseModel):
     access_level: AccessLevelEnum
     token_duration: timedelta  = Field(
-      AccessDurationModel.FREEMIUM, 
+      AccessDurationModel.FREEMIUM.value, 
       description="Default duration for access level"
     )
     token_expiry: Optional[datetime] = Field(
@@ -58,6 +58,8 @@ class AccessLevelModel(BaseModel):
                 token_duration=timedelta(
                     days=365 * 100),  
             )
+        else:
+            raise ValueError("Invalid access level")
 
 class TokenSourceModel(str, Enum):
     # use only lowercase 
@@ -91,7 +93,7 @@ class AdminTokenIssueModel(TokenIssueModel):
 # User info only response
 class UserAuthenticationResponse(BaseModel):
     username: str
-    auth_type: TokenSourceModel
+    auth_source: TokenSourceModel
 
 # token payload model
 class TokenEncodingModel(BaseModel):

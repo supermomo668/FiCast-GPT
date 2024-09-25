@@ -2,7 +2,7 @@ response=$(curl -X POST "http://127.0.0.1:42110/api/podcast/create-script" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -d '{
-    "topic": "world peace",
+    "topic": "health & physical conditioning",
     "n_rounds": 10,
     "participants": [
       {
@@ -12,8 +12,8 @@ response=$(curl -X POST "http://127.0.0.1:42110/api/podcast/create-script" \
         "role": "host"
       },
       {
-        "name": "Obi-Wan Kenobi",
-        "description": "a Jedi in Star Wars Universe",
+        "name": "Darth Vader",
+        "description": "a Sith lord in Star Wars Universe",
         "model": null
       }
     ]

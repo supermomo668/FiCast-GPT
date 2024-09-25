@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from contextlib import asynccontextmanager, contextmanager
+from contextlib import asynccontextmanager
 import dotenv, os
 
 from starlette.middleware.sessions import SessionMiddleware
@@ -11,40 +11,42 @@ from .routes import podcast, auth, basic, samples
 from .models.session import init_db
 from .constants import API_DOC, API_REDOC, APP_ROOT
 
-app = FastAPI(
-    title="LoFi Podcast API",
-    # openapi_url=f"/api/v1/openapi.json",
-    docs_url=API_DOC,
-    redoc_url=API_REDOC,
-    root_path=APP_ROOT
-)
-
-@contextmanager
-def lifespan(app: FastAPI):
-    # Initialize the database and create tables
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Initialize the sqlite and create tables
     init_db()
     yield
-    # Cleanup resources if needed
 
+# Pass the lifespan context manager to FastAPI
+app = FastAPI(
+    title="LoFi Podcast API",
+    docs_url=API_DOC,
+    redoc_url=API_REDOC,
+    root_path=APP_ROOT,
+    lifespan=lifespan  # Provide the lifespan function here
+)
+
+# Include your routers
 app.include_router(auth.router)
 app.include_router(samples.router)
 app.include_router(basic.router)
 app.include_router(podcast.router)
 
+# Add middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.getenv(
-        "ALLOWED_ORIGINS", "localhost,127.0.0.1").split(","),
+    allow_origins=os.getenv("ALLOWED_ORIGINS", "localhost,127.0.0.1").split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=os.getenv("ALLOWED_HEADERS", "*").split(","),
 )
-# (Optional) Add session middleware if session management is needed
+
 app.add_middleware(
-    SessionMiddleware, 
+    SessionMiddleware,
     secret_key=os.getenv("SESSION_SECRET_KEY")
 )
 
+# Run the application with Uvicorn
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=42110)

@@ -5,7 +5,7 @@ class Participant(BaseModel):
     name: str
     description: Optional[str] = None
     model: Optional[str] = None
-    role: Optional[str] = None
+    role: Optional[str] = "guest"
 
 class PodcastRequest(BaseModel):
     topic: str

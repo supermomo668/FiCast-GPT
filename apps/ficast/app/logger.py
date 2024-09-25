@@ -84,6 +84,7 @@ def log_info(msg):
         logger.info(msg)
 
 def log_error(msg):
+    
     if not USE_CELERY:
         with lock:
             logger.error(msg)

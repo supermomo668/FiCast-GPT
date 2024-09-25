@@ -7,7 +7,8 @@ from datetime import datetime
 from pathlib import Path
 import autogen
 
-from thought_agents.ontology.config.dialogue import ConversationConfig, PodcastConfig
+from thought_agents.ontology.config.dialogue import ConversationConfig
+from thought_agents.ontology.parser.dialogue import Podcast
  
 from .base import Conversation
 from ficast.character.podcast import Character, Podcaster
@@ -139,7 +140,7 @@ class Podcast(Conversation):
     return self.chat_history[n_research_agents:-1]
     
   @property
-  def json_script(self) -> Dict:
+  def json_script(self) -> Dict | Podcast:
     if 'content' in self.chat_history[-1]:
         return extract_json_code_block(self.chat_history[-1]['content'])
     else:

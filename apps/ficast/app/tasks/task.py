@@ -127,23 +127,17 @@ class Task:
                 TaskStatus.GENERATING_SCRIPT, 
                 session=local_session
             )
-
+            
+            # Add participants
+            participants = [
+                Podcaster(**p.model_dump()) for p in podcast_request.participants
+            ]
             # Create the Podcast object
             my_podcast = FiCastPodcast(
                 topic=podcast_request.topic,
-                n_rounds=podcast_request.n_rounds
-            )
-
-            # Add participants
-            for participant in podcast_request.participants:
-                podcaster = Podcaster(
-                    name=participant.name,
-                    description=participant.description,
-                    model=participant.model,
-                    role=participant.role if participant.role else "guest"
-                )
-                my_podcast.add([podcaster])
-
+                n_rounds=podcast_request.n_rounds,
+                participants=participants
+            )    
             # Generate script
             chat_history = my_podcast.create()
 
@@ -257,7 +251,8 @@ def create_podcast_task(self, task_id, podcast_request: dict):
     try:
         task = Task(db=db_session, task_id=task_id)
         task._execute_create_podcast_task(
-            PodcastRequest(**podcast_request))
+            PodcastRequest(**podcast_request)
+        )
     except Exception as e:
         log_error(f"Retry {self.request.retries} for task {task_id} failed: {e}")
         self.retry(exc=e)

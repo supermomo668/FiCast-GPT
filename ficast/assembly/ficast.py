@@ -17,6 +17,9 @@ from ficast.dialogue.speech import DialogueSynthesis
 from ficast.conversation.podcast import Podcast
 from ficast.dialogue.utils import save_bytes_to_wav
 
+from thought_agents.ontology.parser.dialogue import Podcast
+
+from ..character.utils import get_all_participants, update_existing_character
 class FiCast(ConvCast):
     """
     A class to assemble and create a podcast conversation.
@@ -45,7 +48,7 @@ class FiCast(ConvCast):
     }
     def __init__(
         self, 
-        conversation: "Podcast", **kwargs: Any
+        conversation: Podcast, **kwargs: Any
         ):
         super().__init__(conversation=conversation, **kwargs)
 
@@ -54,6 +57,16 @@ class FiCast(ConvCast):
         # TODO: Implement music injection based on style
         raise NotImplementedError("Please implement inject_music()")
     
+    def _update_participants_sex_from_script(self, json_script: dict) -> None:
+        if "participants" in json_script:
+            json_participants = get_all_participants(json_script['participants'])
+            return update_existing_character(
+                self.conversation.participants, json_participants,
+                "sex"
+            )
+        else:
+            return False
+
     @lru_cache(maxsize=None)
     def to_podcast(
         self, include_inner_thoughts: bool = False, use_json_script: bool = True,
@@ -72,18 +85,17 @@ class FiCast(ConvCast):
         """
         self.audio_segments = []
         voice_mapping = {}
-        scipt_src = self.conversation.json_script.get("dialogues") if use_json_script else self.conversation.script
+        scipt_src: dict | Podcast = self.conversation.json_script.get("dialogues") if use_json_script else self.conversation.script
+        # use script to populate characters sex if not specified
+        self.conversation.participants = self._update_participants_sex_from_script(json_script=self.conversation.json_script)
         # Map each participant to a unique voice based on their gender
         for participant in self.conversation.participants:
-            gender = participant.gender.lower()
-            if gender not in ['male', 'female']:
-                gender = None  # Default to 'andy'
-            nth = len([p for p in self.conversation.participants if p.gender.lower() == gender])
-            voice_mapping[participant.name] = self.dialogue_synthesizer.get_nth_voice_by_gender(nth - 1, gender)
+            nth = len([p for p in self.conversation.participants if p.sex.lower() == participant.sex.lower()])
+            voice_mapping[participant.name] = self.dialogue_synthesizer.get_nth_voice_by_gender(nth - 1, participant.sex.lower())
           
         # Iterate through the json_script to process each dialogue
         for entry in tqdm.tqdm(scipt_src, desc="Processing script entries"):
-            speaker_name = entry["speaker"]["name"]
+            speaker_name = entry["speaker"]
             # Get the voice for the speaker
             if speaker_name in voice_mapping:
                 # Synthesize the dialogue text

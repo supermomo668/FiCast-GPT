@@ -1,8 +1,10 @@
 # firebase
 gpt-microservices-firebase-adminsdk-nfelm-c5e2e0d182.json
-
 ## dockr Data
 data/
+
+# sqlite db
+*.db
 
 ## hydra logs
 outputs/
@@ -13,6 +15,7 @@ ficast-outputs/
 
 # General
 **/*.
+!.gitignore
 
 # Sensitive
 conf/OAI_CONFIG_LIST.txt

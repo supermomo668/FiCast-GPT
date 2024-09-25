@@ -65,7 +65,8 @@ class Conversation:
     )
     self.all_agents = [self.initializer] + self.participant_agents
 
-  def _validate_new_participants(self, participants: List[Character]):
+  def _validate_new_participants(
+    self, participants: List[Character]):
     for p in participants:
       if p in self.participants:
         warnings.warn(f"Participant `{p.name}` is already in the conversation. Skipping")
@@ -78,7 +79,10 @@ class Conversation:
       participants = [participants]
     for p in participants:
       if p not in self.participants:
-        self.participants.append(p)
+        if p.name not in [p.name for p in self.participants]:
+          self.participants.append(p)
+        else:
+          warnings.warn("Participant name already in conversation. To add a participant, use a unique name. Skipping.")
       
   @property
   def n_participants(self) -> int:
@@ -137,7 +141,9 @@ class Conversation:
     self.chat_history =  self.initializer.initiate_chat(
       self.groupchat_manager, 
       message=self.cfg.system_prompts[self.conv_mode]["initiation"].format(
-      characters=",".join([p.name for p in self.participants]),
+      characters=",".join([
+        p.name for p in self.participants
+      ]),
       topic=self.cfg.podcast_config.topic,
       length=self.cfg.podcast_config.length
       )

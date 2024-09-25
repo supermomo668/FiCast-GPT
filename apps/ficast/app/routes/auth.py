@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 
+from ..logger import logger
 from ..models.auth import TokenIssueModel, AdminTokenIssueModel, AccessLevelEnum, AccessLevelModel, TokenSourceModel, UserAuthenticationResponse
 from ..services.auth import get_current_user, authenticate_user, create_access_token
 
@@ -36,12 +37,12 @@ async def login_for_access_token(
         expires_in=expire_delta
     )
 
-@router.get("/check", response_class=JSONResponse)
+@router.post("/check", response_class=JSONResponse)
 async def test_auth(
     user:UserAuthenticationResponse=Depends(get_current_user)):
     return JSONResponse(
         status_code=200, 
-        content={"auth": "firebase", "user": user["user"]}
+        content=user.model_dump()
     )
 
 @router.post('/issue-api-token', response_model=TokenIssueModel)
@@ -59,14 +60,14 @@ async def issue_api_token(
     Returns:
         An `APITokenResponseModel` containing the issued API token and its access level.
     """
-    access_level_info = AccessLevelModel.get_access_level_info(access_level)
     # Create the token
     access_token = create_access_token(
         username=user_auth.username,
-        access_level=access_level_info,
+        access_level=access_level,
     )
+    logger.info(f"Access token issued for user: {user_auth.username} with access level: {access_level}")
     return TokenIssueModel(
-        api_token=access_token,
+        access_token=access_token,
         access_level=access_level
     )
 

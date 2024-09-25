@@ -31,10 +31,8 @@ def save_json_based_script(script_content, path: Path, option: str) -> None:
     elif option == "human":
         with path.open('w', encoding='utf-8') as f:
             for item in script_content['dialogues']:
-                if 'speaker' in item and 'dialogue' in item:
-                    speaker = item['speaker']['name']
-                    dialogue = item['dialogue']
-                    f.write(f"{speaker}: {dialogue}\n")
+                if isinstance(item, dict) and 'speaker' in item and 'dialogue' in item:
+                    f.write(f"{item['speaker']}: {item['dialogue']}\n")
                 else:
                     warnings.warn(f"Invalid script item: {item}")
 
