@@ -55,13 +55,13 @@ def create_access_token(
     if not expires_delta:
         access_level_info = AccessLevelModel.get_access_level_info(access_level)
         expires_delta = access_level_info.token_duration
-
+    logger.info(f"Created token for user: {username}, Access level: {access_level}, expires in: {expires_delta}, auth source: {auth_source}")
     # Token payload
     to_encode = TokenEncodingModel(
         sub=username,
         exp=datetime.now(timezone.utc) + expires_delta,
         access_level=access_level,
-        auth_type=auth_source
+        auth_source=auth_source
     )
     # Return the encoded token
     return jwt.encode(
@@ -74,8 +74,9 @@ def decode_jwt_token(token: str) -> TokenEncodingModel:
         payload = jwt.decode(
             token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM]
         )
-        payload = TokenEncodingModel(**payload)
-        if hasattr(payload, "auth_type") and payload.auth_type == TokenSourceModel.BEARER:
+        payload: TokenEncodingModel = TokenEncodingModel(**payload)
+        logger.info(f"Decoded Payload: {payload}")
+        if payload.auth_source in (TokenSourceModel.BEARER, TokenSourceModel.LOGIN):
             return payload
         else:
             # Likely a firebase token
@@ -142,7 +143,9 @@ def basic_authentication(auth_header: str) -> UserAuthenticationResponse:
     username, password = credentials[0], credentials[1]
     if verify_user(username, password):
         return UserAuthenticationResponse(
-            username=username, auth_type=TokenSourceModel.LOGIN)
+            username=username, 
+            auth_source=TokenSourceModel.LOGIN
+        )
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED, 
         detail="Incorrect username or password"
@@ -156,10 +159,11 @@ def bearer_authentication(authorization: str) -> UserAuthenticationResponse:
     try:
         token_info: TokenEncodingModel = decode_jwt_token(token)
         # Check if JWT is issued by our system
-        if token_info.auth_type == TokenSourceModel.BEARER:
+        logger.info(f"Token info:  {token_info}")
+        if token_info.auth_source in (TokenSourceModel.BEARER, TokenSourceModel.LOGIN):
             return UserAuthenticationResponse(
                 username=token_info.sub, 
-                auth_type=TokenSourceModel.BEARER,
+                auth_source=TokenSourceModel.BEARER,
             )
     except Exception as e:
         logger.error(f"JWT decoding error: {str(e)}")

@@ -6,9 +6,10 @@ from sqlalchemy.orm import Session
 
 from ..models.request import TaskRequest, PodcastRequest
 from ..models.task_status import TaskProgressRequest, TaskStatusUpdate, TaskStatusResponse
-
+from ..models.auth import UserAuthenticationResponse
 from ..models.db import PodcastTask
 from ..models.session import get_db
+
 from ..logger import log_info
 from ..tasks.task import Task
 from ..services.wait_for_task import wait_for_task_ready
@@ -22,10 +23,10 @@ router = APIRouter(
 )
 
 @router.post("/create-script", response_model=TaskStatusUpdate)
-async def create_podcast(request: PodcastRequest, db: Session = Depends(get_db), user=Depends(get_current_user)):
+async def create_podcast(request: PodcastRequest, db: Session = Depends(get_db), user_auth:UserAuthenticationResponse=Depends(get_current_user)):
     task = Task(db)
     try:
-        log_info(f"Creating podcast for user {user.username} with request: {request}")
+        log_info(f"Creating podcast for user {user_auth.username} with request: {request}")
         task_msg: TaskStatusUpdate = task.create_podcast(request)
         return TaskStatusUpdate(**task_msg.model_dump())
     except Exception as e:

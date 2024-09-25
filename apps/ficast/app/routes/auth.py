@@ -26,7 +26,7 @@ async def login_for_access_token(
             status_code=400, detail="Incorrect username or password")
     # Create the token with access level and expiration
     access_token = create_access_token(
-        username=user_info.username, 
+        username=user_info.username,
         access_level=access_level,
         expires_delta=expire_delta
     )
