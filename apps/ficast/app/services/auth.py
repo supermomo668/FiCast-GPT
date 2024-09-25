@@ -75,7 +75,6 @@ def decode_jwt_token(token: str) -> TokenEncodingModel:
             token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM]
         )
         payload: TokenEncodingModel = TokenEncodingModel(**payload)
-        logger.info(f"Decoded Payload: {payload}")
         if payload.auth_source in (TokenSourceModel.BEARER, TokenSourceModel.LOGIN):
             return payload
         else:
