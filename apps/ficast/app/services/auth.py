@@ -49,7 +49,7 @@ def create_access_token(
     username: str, 
     access_level: AccessLevelEnum = AccessLevelEnum.FREEMIUM, 
     expires_delta: Optional[timedelta] = None,
-    auth_type: TokenSourceModel =TokenSourceModel.BEARER
+    auth_source: TokenSourceModel =TokenSourceModel.BEARER
 ) -> str:
     # Get default access level settings
     if not expires_delta:
@@ -61,7 +61,7 @@ def create_access_token(
         sub=username,
         exp=datetime.now(timezone.utc) + expires_delta,
         access_level=access_level,
-        auth_type=auth_type
+        auth_type=auth_source
     )
     # Return the encoded token
     return jwt.encode(
@@ -109,6 +109,7 @@ def firebase_token_authentication(
     ) -> UserAuthenticationResponse:
     try:
         decoded_token = auth.verify_id_token(firebase_token)
+        
         return UserAuthenticationResponse(
             username=decoded_token["email"], 
             auth_source=TokenSourceModel.FIREBASE
@@ -152,7 +153,6 @@ def bearer_authentication(authorization: str) -> UserAuthenticationResponse:
     logger.info(f"Scheme: {scheme}, token: {token[:5]}...")
     if scheme.lower() != TokenSourceModel.BEARER:
         raise HTTPException(status_code=401, detail="Invalid authentication scheme")
-    logger.info(f"Authenticating using scheme: {scheme}")
     try:
         token_info: TokenEncodingModel = decode_jwt_token(token)
         # Check if JWT is issued by our system
@@ -161,13 +161,11 @@ def bearer_authentication(authorization: str) -> UserAuthenticationResponse:
                 username=token_info.sub, 
                 auth_type=TokenSourceModel.BEARER,
             )
-        else:
-            logger.info(f"Using Firebase Authentication")
-            # Check for Firebase tokens
-            return firebase_token_authentication(token)
-    except jwt.PyJWTError as e:
+    except Exception as e:
         logger.error(f"JWT decoding error: {str(e)}")
-        raise HTTPException(status_code=401, detail="Invalid JWT token")
+    try:
+        logger.info(f"Using Firebase Authentication")
+        # Check for Firebase tokens
+        return firebase_token_authentication(token)
     except Exception as e:
         logger.error(f"Unknown token authentication error: {str(e)}")
-        raise HTTPException(status_code=401, detail="Unknown token authentication error")

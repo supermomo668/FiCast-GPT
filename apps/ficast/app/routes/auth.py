@@ -39,10 +39,9 @@ async def login_for_access_token(
 
 @router.post("/check", response_class=JSONResponse)
 async def test_auth(
-    user:UserAuthenticationResponse=Depends(get_current_user)):
+    user_auth: UserAuthenticationResponse=Depends(get_current_user)):
     return JSONResponse(
-        status_code=200, 
-        content=user.model_dump()
+        status_code=200, content=user_auth.model_dump()
     )
 
 @router.post('/issue-api-token', response_model=TokenIssueModel)
@@ -76,6 +75,6 @@ async def test_api_token(
     user_auth:UserAuthenticationResponse=Depends(get_current_user)):
     return UserAuthenticationResponse(
         username= user_auth.username,
-        auth_type=user_auth.auth_type
+        auth_source=user_auth.auth_source
     )
 

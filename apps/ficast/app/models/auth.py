@@ -22,10 +22,7 @@ class AccessMaxParticipantModel(Enum):
 # Define Access Level
 class AccessLevelModel(BaseModel):
     access_level: AccessLevelEnum
-    token_duration: timedelta  = Field(
-      AccessDurationModel.FREEMIUM.value, 
-      description="Default duration for access level"
-    )
+    token_duration: timedelta  = AccessDurationModel.FREEMIUM.value
     token_expiry: Optional[datetime] = Field(
       None, 
       description="Specific expiry date and time for the token"
@@ -71,7 +68,7 @@ class TokenSourceModel(str, Enum):
 class TokenAuthModel(BaseModel):
     token_type: TokenSourceModel = TokenSourceModel.BEARER
     access_level: AccessLevelEnum
-    expire_delta: Optional[timedelta] = Field(default=AccessDurationModel.FREEMIUM, alias="expires_in")
+    expire_delta: Optional[timedelta] = AccessDurationModel.FREEMIUM.value
     expires_at: Optional[timedelta] = None
     @model_validator(mode="after")
     def fill_expires_in(self):
@@ -100,4 +97,4 @@ class TokenEncodingModel(BaseModel):
     sub: str
     exp: Optional[datetime] = None
     access_level: Optional[AccessLevelEnum] = None
-    auth_type: Optional[TokenSourceModel] = None
+    auth_source: Optional[TokenSourceModel] = None
