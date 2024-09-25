@@ -1,5 +1,9 @@
 {
   "dependencies": {
+    "@paypal/paypal-js": "^8.1.2",
     "eventsource": "^2.0.2"
+  },
+  "devDependencies": {
+    "@paypal/react-paypal-js": "^8.7.0"
   }
 }

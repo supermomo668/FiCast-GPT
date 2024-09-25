@@ -22,22 +22,23 @@ from .utils import extract_json_code_block, save_json_based_script, save_raw_bas
 class Podcast(Conversation):
   n_rounds: int
   topic: str
+  participants: List[Podcaster]
   output_format: str = "json"
-  participants: List[Podcaster] = []
   cfg: ConversationConfig = load_podcast_config()
   conv_mode: str = "podcast"
   class Config:
     arbitrary_types_allowed = True
 
   def __init__(
-    self,
-    topic: str, 
-    participants: List[Character] = [], 
-    n_rounds: int =None, 
-    ):
-    
+      self,
+      topic: str, 
+      participants: List[Character] = None,  # Avoid using [] as default
+      n_rounds: int = None,
+  ):
+    if participants is None:
+        participants = []  # Initialize an empty list if None is passed
     super().__init__(
-      topic=topic, participants=participants, n_rounds=n_rounds, output_format=self.output_format
+        topic=topic, participants=participants, n_rounds=n_rounds, output_format=self.output_format
     )
     # self.cfg = load_podcast_config()  # Assuming conv_cfg is defined elsewhere
     self.initializer = autogen.UserProxyAgent(
@@ -46,18 +47,20 @@ class Podcast(Conversation):
     )
     self.cfg.podcast_config.n_rounds = n_rounds
     self.cfg.podcast_config.topic = topic
+  
+  @property
+  def research_agents(self) -> List[autogen.Agent]:
+    return agent_registry.get_class("dialogue.research")(self.cfg.llm_config, self.cfg.system_prompts)
     
   @property
   def agent_chain(self) -> List[autogen.Agent]:
     # create research_agents: research_coder, executor, informer
-    research_agents = agent_registry.get_class("dialogue.research")(
-      self.cfg.llm_config, self.cfg.system_prompts)
     script_parser = agent_registry.get_class("podcast.parser")(
       self.cfg.llm_config, self.cfg.system_prompts)
     # create podcast agents:  podcast_host, podcast_guests
     agents = [self.initializer]
     for a in [
-      research_agents, self.host_agents, self.guest_agents, script_parser]:
+      self.research_agents, self.host_agents, self.guest_agents, script_parser]:
       agents.extend(a)
     return agents
   
@@ -91,16 +94,23 @@ class Podcast(Conversation):
     
   def _create_conv_group(self):
     self._validate_participants()
+    """
+    Creates a conversation group (GroupChat) and a manager for it based on the current configuration and participant list.
+
+    :return: None
+    """
     self._set_character_cfg()
     podcast_cfg = self.cfg.podcast_config
+    # compensate number of rounds : research + parsing
+    max_podcast_rounds = podcast_cfg.n_rounds + len(self.research_agents) + 1
     groupchat = autogen.GroupChat(
         agents=self.agent_chain,
         messages=[],
-        max_round=podcast_cfg.n_rounds,
+        max_round=max_podcast_rounds,
         speaker_selection_method=get_state_transition(
           podcast_cfg, 
-          transition=f"podcast.default", 
-          MAX_ROUND=podcast_cfg.n_rounds
+          transition=f"podcast.default",
+          MAX_ROUND=max_podcast_rounds
         ),
     )
     self.groupchat_manager = autogen.GroupChatManager(
@@ -135,8 +145,7 @@ class Podcast(Conversation):
   @property
   def raw_script(self, create_if_na:bool = True) -> Dict[str, str]:
     # return only the chat history concerning podcast agents
-    n_research_agents = len(agent_registry.get_class("dialogue.research")(
-      self.cfg.llm_config, self.cfg.system_prompts))
+    n_research_agents = len(self.research_agents)
     return self.chat_history[n_research_agents:-1]
     
   @property

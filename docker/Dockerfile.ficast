@@ -4,20 +4,37 @@ FROM python:3.11-slim
 # Set the working directory in the container
 WORKDIR /app
 
+# ├── app
+# │   └── ficast
+# │       └── ... (application code)
+# ├── conf
+# │   └── dialogue
+# │       └── ... (hydra configuration files)
+# ├── ficast
+# │   └── ... (ficast module code)
+# ├── pyproject.toml
+# ├── poetry.lock
 # Copy the necessary files into the container
+# 1. Application code, 2. poetry deps 3. ficast module 4. configurations
 COPY ../apps/ficast /app/
 COPY ../pyproject.toml ../poetry.lock /app/
 COPY ../ficast /app/ficast/
+COPY ../conf /app/conf
+
+RUN apt-get update && apt-get install -y libgomp1
 
 # Install Poetry
-RUN pip install poetry==1.8.3
+RUN pip install poetry==1.8.
 
 # Install the dependencies specified in pyproject.toml, including the "api" group
-RUN poetry install --no-interaction --no-ansi --with api
+RUN poetry lock --no-update && poetry install --no-interaction --no-ansi --with api
 
 # Make sure the entrypoint script is executable
 RUN chmod +x /app/scripts/api-entrypoint.sh /app/scripts/celery-entrypoint.sh
 
+# environment for hydra configuratio, docker-api hydra configuration at "../conf/dialogue" relative to the start script
+ENV HYDRA_CONFIG_NAME="docker-api"
+ENV HYDRA_CONFIG_PATH="../conf/dialogue" 
 # Set the entrypoint to the entrypoint script
 ENTRYPOINT ["/app/scripts/api-entrypoint.sh"]
 

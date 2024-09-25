@@ -1,3 +1,4 @@
+from token import OP
 from typing import Optional
 import warnings
 import autogen 
@@ -27,6 +28,7 @@ class Podcaster(Character):
         Returns an introduction string for the podcaster.
     """
     model: Optional[str] = Field(default="gemini-1.5-pro")
+    role: Optional[str] = Field(default="guest")
     @field_validator('model')
     def set_default_model(cls, v):
         if v is None:
@@ -37,8 +39,8 @@ class Podcaster(Character):
       self, 
       name: str,
       description: Optional[str] = None,
-      model: Optional[str] = Field(default="gemini-1.5-pro"),
-      role: str = "guest",
+      model: Optional[str] = "gemini-1.5-pro",
+      role: Optional[str] = "guest",
       sex: Optional[str] = None,
       system_message: str = "As yourself: {name}, respond to the conversation.",
       ):

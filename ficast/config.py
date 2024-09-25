@@ -7,6 +7,7 @@ from hydra.core.global_hydra import GlobalHydra
 
 from thought_agents.ontology.config.dialogue import ConversationConfig, PodcastConfig #
 
+print(f"Loading config from path: {os.getcwd()}")
 default_cfg = None  # Initialize as None to avoid premature loading
 default_cfg_path = os.getenv(
     "HYDRA_CONFIG_PATH", "../conf/dialogue")

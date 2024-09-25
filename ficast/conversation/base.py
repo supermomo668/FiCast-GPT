@@ -48,12 +48,11 @@ class Conversation:
   def __init__(
     self, 
     topic: str, 
+    n_rounds: int, 
     participants: List[Character] = [], 
-    n_rounds: int = None, 
     output_format: str="json"
     ):
-    if n_rounds is None:
-      n_rounds = len(participants)+1
+    self.participants = participants
     self.topic = topic
     self._init_agents()
 

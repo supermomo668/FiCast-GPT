@@ -1,0 +1,20 @@
+defaults:
+  - base  # Inherit from base.yaml
+  - characters: default
+  - speech: default
+  - _self_
+
+llm_config:
+  # Adjusted relative path to the configuration
+  config_list_path: "conf/OAI_CONFIG_LIST.txt"
+
+podcast_config:
+  topic: "<An Interesting Topic>"
+  n_rounds: ${conversation_config.n_rounds}  # Inherit from base.yaml
+  length: 10
+  character_cfg:
+    hosts: ${characters.hosts}  # Reference to host in characters.yaml
+    guests: ${characters.guests}  # Reference to guests in characters.yaml
+  speech: ${speech}
+  
+

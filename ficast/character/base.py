@@ -1,4 +1,5 @@
 import re
+import autogen
 from typing import Optional, List
 
 from thought_agents.ontology.config.dialogue import Person, AutogenLLMConfig, ConversationConfig
@@ -77,6 +78,16 @@ class Character(Person):
         """Return an introduction string for the podcaster."""
         return f"{self.name}: {self.desc}"
     
+    @property
+    def agent(self):
+      return autogen.ConversableAgent(
+        name=self.name,  
+        human_input_mode="NEVER",
+        code_execution_config=False,
+        llm_config=self.cfg.llm_config.model_dump(),
+        description=self.description,
+        system_message=self.system_message
+      )
     @property
     def __allowed_roles__(self):
         return ["*"]

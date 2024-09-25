@@ -3,6 +3,7 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile.ficast 
+    container_name: fastapi
     command: --host 0.0.0.0 --port 42110
     ports:
       - "${FASTAPI_PORT:-42110}:${FASTAPI_PORT:-42110}"
@@ -16,14 +17,16 @@ services:
   celery_worker:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.ficast 
+      dockerfile: docker/Dockerfile.ficast
+    container_name: celery_worker
     entrypoint: ["/app/scripts/celery-entrypoint.sh"]
     command: worker --loglevel=${CELERY_LOGLEVEL:-info} --pool=${CELERY_POOL:-solo}
     environment:
+      # Overewrite the host `localhost`with the redis host name `redis` for docker deployment
       - C_FORCE_ROOT=true
       - CELERY_BROKER_URL=redis://redis:${REDIS_PORT:-6379}/0
       - CELERY_RESULT_BACKEND=redis://redis:${REDIS_PORT:-6379}/0
-      - CELERY_CONCURRENCY=${CELERY_CONCURRENCY:-1}
+      - CELERY_CONCURRENCY=${CELERY_CONCURRENCY:-4}
     env_file:
       - ../apps/ficast/.env
     depends_on:
@@ -36,6 +39,7 @@ services:
       - "${REDIS_PORT:-6379}:6379"
     env_file:
       - ../apps/ficast/.env
+    container_name: redis
 
 networks:
   default:

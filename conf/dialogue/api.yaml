@@ -5,6 +5,7 @@ defaults:
   - _self_
 
 llm_config:
+  # Adjusted relative path to the configuration from `load_podcast_config` in application entrypoint
   config_list_path: "../../conf/OAI_CONFIG_LIST.txt"
 
 podcast_config:

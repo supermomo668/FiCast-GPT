@@ -115,37 +115,31 @@ from elevenlabs import play
 play(bytes(my_audio, 'latin-1'))
 ```
 
-## Declaritive Configruation [In Development. Status: N/A]
+## Managing Git Submodules
 
-You may choose to run the application in a one-time declartive format using the `ficast.main` module.
-```yaml
-MODEL: gpt-4
-PROMPTS: 
-  AGENTS:
-    DEFAULT: "The following is a friendly conversation between a human and an AI. The AI is talkative and provides lots of specific details from its context. If the AI does not know the answer to a question, it truthfully says it does not know.\n\nCurrent conversation:\n{history}\nHuman: {input}\nAI:"
-    PODCAST_HOST: "The following is a friendly conversation between a passionate podcast host and a Harvard medical expert. The host is and knowledgeable in the health/longevity biotech & biology space. The host provides questions and talking points based in academic research and entrepreneurship space, akin to Andrew Hubermann, Simon Hill and David Sinclair and will also respond to the guest's response .\n\nCurrent conversation:\n{history}\nSystem:{input}\nPodcast Host:"
-    PODCAST_GUEST(HARVARD): "The following is a friendly conversation between a passionate podcast host and a Harvard medical expert. The guest expert is particularly knowledgeable in the health/longevity biotech & biology space that could reference academic research and entrepreneurship space, akin to Andrew Hubermann, Simon Hill and David Sinclair. The host provides questions and talking points while the guest provides fully elaborated responses to the host's questions.\n\nCurrent conversation:\n{history}\nPodcast Host: {input}\nExpert:"
-    PODCAST_GUEST: "The following is a friendly conversation between a passionate podcast host and a Harvard medical expert. The guest expert is particularly knowledgeable in the health/longevity biotech & biology space that could reference academic research and entrepreneurship space, akin to Andrew Hubermann, Simon Hill and David Sinclair. As the guest expert, you provide detailed, insigthful & comprehensive responses to the host's questions.\n\nCurrent conversation:\n{history}\nPodcast Host: {input}\nExpert:"
-  CONVERSATION:
-    HOST_CONTINUATION: Apart from what you mentioned, would you mind elaborating on what you discussed and some additional adjacent concepts?
-MEMORY_CONTEXT_TOKEN: 2000
-SPEECH:
-  WORDS_PER_MIN: 150
+This repository contains submodules for two key components of the FiCast project:
 
-CONVERSATION:
-  SPEAKING_TIME_MINS: 60
-  TEMPO: 75
+1. **FiCast Web Frontend**: The web frontend for FiCast is located in the `apps/web` directory and is a separate repository hosted privately at [FiCast-Frontend](https://github.com/supermomo668/FiCast-Frontend).
+2. **Tortoise-TTS**: The text-to-speech (TTS) engine is located in the `tortoise-tts` directory and is hosted as a separate submodule.
 
-MUSIC:
-  SOURCE: CHAOSIC
-  CATEOGRY: lofi
-  BPM: 80
-```
+  ### Cloning the Repository with Submodules
 
-## Autogen Workflow Diagram
+  When cloning this repository for the first time, you need to initialize the submodules to ensure you get the content for both `apps/web` and `tortoise-tts`.
+
+  Run the following commands to clone the repository and initialize the submodules:
+
+  ```bash
+  git clone git@github.com:supermomo668/FiCast-GPT.git
+  cd FiCast-GPT
+  git submodule update --init --recursive
+  ```
+
+  This will ensure that both the FiCast Web Frontend (`apps/web`) and Tortoise-TTS (`tortoise-tts`) submodules are correctly fetched.
+
+## Autogen Workflow Diagram (An Illustration of how the conversation takes place)
 
 <p align="center">
-  <img src="https://www.mermaidchart.com/raw/62a04ff4-da63-4033-a610-a2aacc5fba5c?theme=light&version=v0.1&format=svg" width="60%">
+  <img src="https://www.mermaidchart.com/raw/62a04ff4-da63-4033-a610-a2aacc5fba5c?theme=light&version=v0.1&format=svg" width="100%">
 </p>
 
 
