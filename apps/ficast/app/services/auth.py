@@ -2,6 +2,7 @@ import os
 import base64
 from re import U
 import secrets
+import stat
 import jwt
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict
@@ -125,13 +126,16 @@ async def get_current_user(
     # auth_header = request.headers.get("Authorization")
     
     if authorization:
-        if authorization.lower().startswith(TokenSourceModel.LOGIN):
-            logger.info("Basic auth header detected")
-            return basic_authentication(authorization)
-        else:
-            logger.info("Bearer auth header detected")
-            return bearer_authentication(authorization)
-    raise HTTPException(
+        try:
+            if authorization.lower().startswith(TokenSourceModel.LOGIN):
+                logger.info("Basic auth header detected")
+                return basic_authentication(authorization)
+            else:
+                logger.info("Bearer auth header detected")
+                return bearer_authentication(authorization)
+        except Exception as e:
+            return HTTPException(status_code=401, detail=str(e))
+    return HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED, 
         detail="Missing or invalid credentials"
     )

@@ -31,6 +31,7 @@ async def create_podcast(request: PodcastRequest, db: Session = Depends(get_db),
         return TaskStatusUpdate(**task_msg.model_dump())
     except Exception as e:
         handle_task_exceptions(e)
+        return HTTPException(status_code=500, detail=f"{e}")
 
 @router.post("/stream/progress")
 async def stream_task_progress(request: TaskProgressRequest, db: Session = Depends(get_db), user=Depends(get_current_user)):

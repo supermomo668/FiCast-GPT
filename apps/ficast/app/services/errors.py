@@ -11,7 +11,9 @@ def handle_task_exceptions(exc: Exception):
     log_error(f"Task error: {str(exc)}\n{traceback.format_exc()}")
     if isinstance(exc, HTTPException):
         raise exc
-    raise HTTPException(status_code=500, detail="An unexpected error occurred during task execution.")
+    raise HTTPException(
+        status_code=500, 
+        detail="An unexpected error occurred during task execution.")
 
 def handle_database_exceptions(db: Session, exc: Exception):
     """ Handle database-related exceptions and log error details """

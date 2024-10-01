@@ -8,3 +8,4 @@ echo "Poetry environment path: $(poetry env info --path)"
 
 # start celery worker
 USE_CELERY=1 celery -A app.tasks.task.celery_app "$@"
+            celery -A app.tasks.task.celery_app worker --loglevel=info
