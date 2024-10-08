@@ -7,3 +7,6 @@
 [submodule "apps/web"]
 	path = apps/web
 	url = https://github.com/supermomo668/FiCast-Frontend.git
+[submodule "apps/ficast"]
+	path = apps/ficast
+	url = git@github.com:supermomo668/Ficast-service.git
