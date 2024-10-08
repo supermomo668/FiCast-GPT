@@ -23,7 +23,6 @@ services:
     command: worker --loglevel=${CELERY_LOGLEVEL:-info} --pool=${CELERY_POOL:-solo}
     environment:
       # Overewrite the host `localhost`with the redis host name `redis` for docker deployment
-      - C_FORCE_ROOT=true
     env_file:
       - ../apps/ficast/.docker.env
     depends_on:
@@ -32,7 +31,7 @@ services:
     
 
   redis:
-    image: "redis:alpine"
+    image: "redis:latest"
     container_name: redis
     ports:
       - "${REDIS_PORT:-6379}:6379"

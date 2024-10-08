@@ -1,3 +1,4 @@
+from venv import logger
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 import dotenv, os
@@ -11,6 +12,9 @@ from .routes import podcast, auth, basic, samples
 from .models.session import init_db
 from .constants import API_DOC, API_REDOC, APP_ROOT
 
+if os.getenv("TEST_USERS"):
+    logger.info(f"Enabled test users only mode. Only the following users will be able to access protected API:{os.getenv('TEST_USERS')}")
+    
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Initialize the sqlite and create tables

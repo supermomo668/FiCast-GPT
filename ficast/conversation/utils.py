@@ -16,7 +16,7 @@ def extract_json_code_block(s: str) -> Dict[str, Any]:
     # Find all JSON code blocks
     match = re.search(pattern, s)
     if not match:
-        raise ValueError("No valid JSON code blocks found.")
+        raise ValueError("No valid JSON code blocks found within content.")
     # Convert each JSON string to a dictionary
     json_str = clean_json_string(match[0])
     try:

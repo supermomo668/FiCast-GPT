@@ -105,26 +105,13 @@ def authenticate_user(username: str, password: str) -> UserAuthenticationRespons
         )
     return None
 
-def firebase_token_authentication(
-    firebase_token: str = Depends(get_bearer_token)
-    ) -> UserAuthenticationResponse:
-    try:
-        decoded_token = auth.verify_id_token(firebase_token)
-        
-        return UserAuthenticationResponse(
-            username=decoded_token["email"], 
-            auth_source=TokenSourceModel.FIREBASE
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=401, detail=f"Invalid Firebase token: {str(e)}")
-        
+import os
+from fastapi import HTTPException, Depends
+
 async def get_current_user(
-    request: Request, 
+    request: Request,
     authorization: Optional[str] = Security(api_key_header)
-    ) -> UserAuthenticationResponse:
-    # auth_header = request.headers.get("Authorization")
-    
+) -> UserAuthenticationResponse:
     if authorization:
         try:
             if authorization.lower().startswith(TokenSourceModel.LOGIN):
@@ -133,12 +120,43 @@ async def get_current_user(
             else:
                 logger.info("Bearer auth header detected")
                 return bearer_authentication(authorization)
+        except HTTPException as e:
+            # Re-raise HTTPExceptions to be handled by FastAPI
+            raise e
         except Exception as e:
-            return HTTPException(status_code=401, detail=str(e))
-    return HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED, 
+            raise HTTPException(status_code=401, detail=str(e))
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Missing or invalid credentials"
     )
+
+    
+def firebase_token_authentication(
+    firebase_token: str = Depends(get_bearer_token)
+) -> UserAuthenticationResponse:
+    try:
+        decoded_token = auth.verify_id_token(firebase_token)
+        user_email = decoded_token["email"]
+
+        # Retrieve TEST_USERS environment variable and split into a list
+        test_users_env = os.environ.get("TEST_USERS", "")
+        test_users_list = [email.strip() for email in test_users_env.split(",") if email.strip()]
+
+        # Check if the user's email is in the test users list
+        if user_email not in test_users_list:
+            raise HTTPException(
+                status_code=401, detail="User not authorized for testing."
+            )
+        return UserAuthenticationResponse(
+            username=user_email,
+            auth_source=TokenSourceModel.FIREBASE
+        )
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=401, detail=f"Invalid Firebase token: {str(e)}")
+
 
 def basic_authentication(auth_header: str) -> UserAuthenticationResponse:
     auth = auth_header.split(" ")[1]
@@ -176,3 +194,6 @@ def bearer_authentication(authorization: str) -> UserAuthenticationResponse:
         return firebase_token_authentication(token)
     except Exception as e:
         logger.error(f"Unknown token authentication error: {str(e)}")
+        raise HTTPException(
+            status_code=401, detail=f"Firebase Authentication failed:{str(e)}"
+        )

@@ -1,9 +1,6 @@
 from datetime import datetime
-from functools import lru_cache
-import io
 from pathlib import Path
-import warnings
-from beartype import beartype
+import re
 import tqdm
 import hydra
 from omegaconf import DictConfig, OmegaConf
@@ -67,7 +64,6 @@ class FiCast(ConvCast):
         else:
             return False
 
-    @lru_cache(maxsize=None)
     def to_podcast(
         self, include_inner_thoughts: bool = False, use_json_script: bool = True,
         **tts_kwargs: Any
@@ -88,10 +84,21 @@ class FiCast(ConvCast):
         scipt_src: dict | Podcast = self.conversation.json_script.get("dialogues") if use_json_script else self.conversation.script
         # use script to populate characters sex if not specified
         self.conversation.participants = self._update_participants_sex_from_script(json_script=self.conversation.json_script)
-        # Map each participant to a unique voice based on their gender
+        available_voices = self.dialogue_synthesizer.all_voices_by_name
+        # Map each participant to a unique voice
         for participant in self.conversation.participants:
-            nth = len([p for p in self.conversation.participants if p.sex.lower() == participant.sex.lower()])
-            voice_mapping[participant.name] = self.dialogue_synthesizer.get_nth_voice_by_gender(nth - 1, participant.sex.lower())
+            # 1 Check name in voice first
+            name_slug = participant.name
+            pattern = re.compile(re.escape(name_slug) + '|' + re.escape(name_slug).replace(' ', '_'), re.IGNORECASE)
+            matching_voices = [voice for voice in available_voices if pattern.fullmatch(voice)]
+            if matching_voices:
+                print(f"Voice name found. Using {matching_voices[0]} voice for {participant.name}")
+                voice_mapping[participant.name] = available_voices[matching_voices[0]]
+            else:
+                print(f"No voice found. Using random voice for {participant.name}")
+                # use gender to get first unused voice
+                nth = len([p for p in self.conversation.participants if p.sex.lower() == participant.sex.lower()])
+                voice_mapping[participant.name] = self.dialogue_synthesizer.get_nth_voice_by_gender(nth - 1, participant.sex.lower())
           
         # Iterate through the json_script to process each dialogue
         for entry in tqdm.tqdm(scipt_src, desc="Processing script entries"):

@@ -16,7 +16,7 @@ dotenv.load_dotenv()
 class TextToSpeech:
   voice_wildcards = ["random", "any"]
 
-  def __init__(self, client_type: str, **kwargs: typing.Any):
+  def __init__(self, client_type: str, api_key:str=None, **kwargs: typing.Any):
     """
     Initializes the TextToSpeech object.
 
@@ -25,9 +25,20 @@ class TextToSpeech:
           Supported: 'api', 'elevenlabs'
     Returns:
         None
+    Docs: for Tortoise TTS (API client), the following kwargs are available:
+    **kwargs: Additional keyword arguments.
+                preset: str
+                use_deepspeed: bool = False
+                kv_cache: bool = False
+                half: bool = False
+                candidates: int = 1
+                seed: int = None
+                cvvp_amount: float = 0.0
+                produce_debug_state: bool = False
     """
     #### Init TTS Client
-    self.client = tts_client_factory(client_type, **kwargs)
+    self.client = tts_client_factory(
+      client_type, api_key=api_key, **kwargs)
 
   @property
   def n_voices(self):
@@ -37,6 +48,11 @@ class TextToSpeech:
   @lru_cache(maxsize=None)
   def all_voices_by_id(self) -> dict[str, Voice | str]:
     return self.client.all_voices_by_id
+  
+  @property
+  @lru_cache(maxsize=None)
+  def all_voices_by_name(self) -> dict[str, Voice | str]:
+    return {v.name: v for k, v in self.all_voices_by_id.items()}
   
   def get_random_voices(self):
     voices = list(self.all_voices_by_id.values())
@@ -74,7 +90,7 @@ class TextToSpeech:
     self,
     text: str, 
     voice_id: str = None, 
-    voice_name: str = "random", 
+    voice_name: str = None, 
     **kwargs
   ) -> Generator[bytearray, None, None] | typing.AsyncGenerator[bytearray, None]:
     # Check if both voice_id and voice_name are provided
@@ -96,8 +112,9 @@ class TextToSpeech:
 
 class DialogueSynthesis(TextToSpeech):
   audio_encoding: str = "latin-1"
-  def __init__(self, client_type="elevenlabs", **kwargs):
-    super().__init__(client_type=client_type, **kwargs)
+  def __init__(self, client_type="elevenlabs", api_key=None, **kwargs):
+    super().__init__(
+      client_type=client_type, api_key=api_key, **kwargs)
   
   def get_nth_voice_by_gender(self, nth: int, gender: str=None):
     if gender is None:

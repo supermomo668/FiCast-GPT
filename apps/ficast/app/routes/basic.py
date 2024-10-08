@@ -15,6 +15,7 @@ async def home():
 
 @router.get("/ping")
 async def ping():
+    
     return True
 
 @router.get("/privacy-policy/", response_class=HTMLResponse)

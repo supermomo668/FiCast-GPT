@@ -46,7 +46,7 @@ async def test_auth(
 
 @router.post('/issue-api-token', response_model=TokenIssueModel)
 async def issue_api_token(
-    user_auth:UserAuthenticationResponse=Depends(get_current_user),
+    user_auth: UserAuthenticationResponse=Depends(get_current_user),
     access_level: AccessLevelEnum = AccessLevelEnum.FREEMIUM
     ):
     # Get access level default settings

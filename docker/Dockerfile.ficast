@@ -5,8 +5,9 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # ├── app
-# │   └── ficast
+# │   └── app
 # │       └── ... (application code)
+# │   └── .docker.env
 # ├── conf
 # │   └── dialogue
 # │       └── ... (hydra configuration files)
@@ -32,7 +33,7 @@ RUN poetry lock --no-update && poetry install --no-interaction --no-ansi --with 
 # Make sure the entrypoint script is executable
 RUN chmod +x /app/scripts/api-entrypoint.sh /app/scripts/celery-entrypoint.sh
 
-# environment for hydra configuratio, docker-api hydra configuration at "../conf/dialogue" relative to the start script
+# environment for hydra configuratio, docker-api hydra configuration at "../conf/dialogue" relative to "/app/ficast/config.py"
 ENV HYDRA_CONFIG_NAME="docker-api"
 ENV HYDRA_CONFIG_PATH="../conf/dialogue" 
 # Set the entrypoint to the entrypoint script

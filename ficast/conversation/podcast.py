@@ -173,16 +173,85 @@ class Podcast(Conversation):
     else:
       raise ValueError(f"Unsupported option '{option}' provided. Supported options are 'json', 'text', 'html', and 'human'.")
     print(f"Script saved to {path}")
-    
+
   @classmethod
   @beartype
   def from_chat_history(cls, chat_history: List[Dict]):
+      """
+      Class method to create a Podcast instance from a given chat history.
+      Reconstructs the Podcast object by reverse engineering the chat history data.
+      """
+      # Initialize an instance with default or dummy arguments
+      instance = cls(topic="", participants=[], n_rounds=len(chat_history))
+
+      # Extract participants from chat history
+      participants = _extract_participants_from_chat_history(chat_history)
+      instance.participants = participants
+      # Set the chat history
+      instance.chat_history = chat_history
+      return instance
+
+  @classmethod
+  @beartype
+  def from_script(cls, json_script: Dict):
+      """
+      Class method to create a Podcast instance from a given script.
+      Parses the `json_script` and constructs the Podcast object with participants and other metadata.
+      """
+      # Extract participants (hosts and guests)
+      participants = _extract_participants(json_script.get('participants', {}))
+      # Initialize the Podcast instance with extracted information
+      instance = cls(
+          topic=json_script.get('title', ''),
+          participants=participants,
+          n_rounds=len(json_script.get('dialogues', []))
+      )
+      instance.chat_history = [{'content': f"```json\n{json.dumps(json_script)}\n```"}]  # Set the json_script
+      return instance
+
+
+# Helper functions
+
+def _extract_participants(participants_data: Dict) -> List[Podcaster]:
     """
-    Class method to create a Podcast instance from a given chat history.
+    Helper method to extract participants (hosts and guests) from the given participants data.
     """
-    # Initialize an instance with default or dummy arguments
-    instance = cls(
-      topic="", participants=[], n_rounds=0)
-    # Set the chat history
-    instance.chat_history = chat_history
-    return instance
+    participants = []
+
+    # Adding hosts and guests using Podcaster(**data)
+    for host in participants_data.get('hosts', []):
+        participants.append(Podcaster(**host, role="host"))
+
+    for guest in participants_data.get('guests', []):
+        participants.append(Podcaster(**guest, role="guest"))
+
+    return participants
+
+
+def _convert_dialogues_to_chat_history(dialogues: List[Dict]) -> List[Dict]:
+    """
+    Helper method to convert dialogues from the script into chat history format.
+    """
+    chat_history = []
+    for dialogue in dialogues:
+        chat_history.append({
+            'speaker': dialogue['speaker'],
+            'content': dialogue['dialogue'],
+            'inner_thought': dialogue.get('inner_thought', '')
+        })
+    return chat_history
+
+
+def _extract_participants_from_chat_history(chat_history: List[Dict]) -> List[Podcaster]:
+    """
+    Helper method to extract participants from chat history.
+    This is a more complex task as we have to infer the roles and participant details from the chat history.
+    """
+    participants = []
+    speakers = set(entry['speaker'] for entry in chat_history)
+
+    # Assume we can infer roles from the speaker names or metadata
+    for speaker in speakers:
+        participants.append(Podcaster(name=speaker, role="guest"))
+
+    return participants

@@ -28,13 +28,16 @@ def tts_client_factory(
   client_type: str = "api", base_url: str = None, api_key: str = None
   ) -> BaseTTSClient:
     if client_type.lower() == "elevenlabs":
-        api_key = os.getenv("ELEVENLABS_API_KEY") if api_key is None else None
+        if api_key:
+            print(f"API key provided starting with {api_key[:2]}...")
+        else:
+            api_key = os.getenv("ELEVENLABS_API_KEY")
         if not api_key:
             raise ValueError("API key must be provided for ElevenLabs client")
         return ElevenLabsClient(api_key=api_key)
     elif client_type.lower() == "api":
         if not base_url:
-            raise ValueError("Base URL must be provided for FiCastTTS client")
+            raise ValueError("Base URL must be provided for custom FiCastTTS client")
         return APIClient(base_url=base_url)
     else:
         raise ValueError("Unknown client type. Supported: 'api', 'elevenlabs'")
@@ -91,21 +94,21 @@ class APIClient(BaseTTSClient):
     API_ROUTES = {
         "verify-token": "/auth/verify-token",
         "tts-create-task": '/tts',
-        "tts-task-status": '/task/task-status',
-        "tts-task-result": '/task/task-result',
+        "tts-task-status": '/task/status',
+        "tts-task-result": '/task/result',
         "voices": "/tts/voices"
     }
     class TaskNotReadyError(Exception):
         """Custom exception raised when the task status is neither SUCCESS nor FAILURE."""
         pass
-    def __init__(self, base_url: str=None, api_key: str = None):
+    def __init__(self, base_url: str=None, api_key: str = None, api_routes: dict = {}):
         if not base_url:
             base_url = os.getenv('TTS_API_BASE_URL')
             assert base_url, "API base URL must be provided for FiCastTTS client or set the `TTS_API_BASE_URL` environment variable with your base URL"
         if not api_key: 
             api_key = os.getenv('TTS_API_KEY')
         assert api_key, "API key must be provided for FiCastTTS client or set the `TTS_API_KEY` environment variable with your API key"
-        
+        self.API_ROUTES.update(api_routes)
         self.client = httpx.Client(
             base_url=base_url, 
             timeout=httpx.Timeout(CLIENT_TIMEOUT),
@@ -170,10 +173,8 @@ class APIClient(BaseTTSClient):
             raise ValueError("Task ID not found in response.")
         return task_id
 
-    def _get_task_status(
-        self, task_id: str, tts_status_endpoint:str, **kwargs
-        ) -> str:
-        response = self.client.get(f"{tts_status_endpoint}/{task_id}")
+    def _get_task_status(self, task_id: str, **kwargs) -> str:
+        response = self.client.get(f"{self.API_ROUTES['tts-task-status']}/{task_id}")
         response.raise_for_status()
         status = response.json().get("status")
         if not status:
@@ -186,16 +187,12 @@ class APIClient(BaseTTSClient):
         retry=retry_if_exception_type(TaskNotReadyError),
         reraise=True
     )
-    def _wait_for_task_completion(
-        self, task_id: str, tts_status_endpoint: str, **kwargs
-        ):
+    def _wait_for_task_completion(self, task_id: str,  **kwargs):
         """
         Waits for the task to reach SUCCESS or FAILURE status.
         """
-        if not tts_status_endpoint:
-            tts_status_endpoint = self.API_ROUTES["tts-task-status"]
         while True:
-            status = self._get_task_status(task_id, tts_status_endpoint)
+            status = self._get_task_status(task_id)
             if status in self.TASK_SUCCESS_CODES:
                 return
             elif status in self.TASK_FAILURE_CODES:
@@ -210,11 +207,9 @@ class APIClient(BaseTTSClient):
 
     @beartype
     def _get_task_result(
-        self, task_id: str, stream:bool, tts_result_endpoint: str,
-        ) -> Generator[bytes, None, None]:
+        self, task_id: str, stream:bool) -> Generator[bytes, None, None]:
         # print(f"Polling for result for task...")
-        if not tts_result_endpoint:
-            tts_result_endpoint = self.API_ROUTES["tts-task-result"]
+        tts_result_endpoint = self.API_ROUTES["tts-task-result"]
         try:
             with self.client.stream("GET", f"{tts_result_endpoint}/{task_id}") as response:
                 total_size = 0
@@ -235,8 +230,6 @@ class APIClient(BaseTTSClient):
             
     def text_to_speech(
         self, text: str, voice: str, stream:bool=False,
-        tts_task_endpoint="/tts", 
-        tts_status_endpoint="/task/task-status", tts_result_endpoint="/task/task-result",
         **kwargs
         ) -> Generator[bytes, None, None]:
         """
@@ -247,14 +240,18 @@ class APIClient(BaseTTSClient):
             endpoint_create_task(str): endpoint to create task
             endpoint_result(str): endpoint to retrieve result
             **kwargs: Additional keyword arguments.
-                preset (str, optional): The preset to use for speech generation. Defaults to "fast".
+                preset: str
+                use_deepspeed: bool = False
+                kv_cache: bool = False
+                half: bool = False
+                candidates: int = 1
+                seed: int = None
+                cvvp_amount: float = 0.0
+                produce_debug_state: bool = False
         """
-        if not tts_task_endpoint:
-            tts_task_endpoint = self.API_ROUTES["tts-create-task"]
-        if not tts_status_endpoint:
-            tts_status_endpoint = self.API_ROUTES["tts-task-status"]
-        if not tts_result_endpoint:
-            tts_result_endpoint = self.API_ROUTES["tts-task-result"]
+        tts_task_endpoint = self.API_ROUTES["tts-create-task"]
+        tts_status_endpoint = self.API_ROUTES["tts-task-status"]
+        tts_result_endpoint = self.API_ROUTES["tts-task-result"]
         # API client uses name as voice key
         if isinstance(voice , str) and voice in [
             "random", "any"]:
@@ -269,12 +266,10 @@ class APIClient(BaseTTSClient):
             payload, tts_task_endpoint, **kwargs)
         print("Task created: ", task_id)
         # Step 2: Wait for task completion
-        self._wait_for_task_completion(
-            task_id, tts_status_endpoint, **kwargs)
+        self._wait_for_task_completion(task_id, **kwargs)
         # Step 3: Retrieve the task result as a stream
         try:
-            yield from self._get_task_result(
-                task_id, stream, tts_result_endpoint)
+            yield from self._get_task_result(task_id, stream)
         except Exception as e:
             print(f"Failed to retrieve the result for task ID {task_id}: {str(e)}")
             if kwargs.get("ignore_errors"):
