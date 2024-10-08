@@ -1,12 +1,12 @@
 [submodule "tortoise-tts"]
 	path = tortoise-tts
-	url = https://github.com/neonbjb/tortoise-tts.git
+	url = git@github.com:supermomo668/tortoise-tts.git
 [submodule "apps/youtube/api-samples"]
 	path = apps/youtube/api-samples
 	url = git@github.com:youtube/api-samples.git
 [submodule "apps/web"]
 	path = apps/web
-	url = https://github.com/supermomo668/FiCast-Frontend.git
+	url = git@github.com:supermomo668/FiCast-Frontend.git
 [submodule "apps/ficast"]
 	path = apps/ficast
 	url = git@github.com:supermomo668/Ficast-service.git
