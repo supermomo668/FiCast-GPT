@@ -4,6 +4,9 @@
 [submodule "apps/youtube/api-samples"]
 	path = apps/youtube/api-samples
 	url = git@github.com:youtube/api-samples.git
+[submodule "apps/ficast"]
+	path = apps/ficast
+	url = git@github.com:supermomo668/Ficast-service.git
 [submodule "apps/web"]
 	path = apps/web
 	url = git@github.com:supermomo668/FiCast-Frontend.git
