@@ -1,1 +1,0 @@
-docker run -d --name celery-redis -p 6379:6379 redis
